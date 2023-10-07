@@ -43,7 +43,7 @@ trial <- 1
 ix2 = 0
 V=1200
 
-while( trial < 20){
+while(trial < 20){
   
   set.seed(trial+ix2)
   sim.2.fit <- simulate_mkvian_data(ap.volumes=rep(V,width-1),

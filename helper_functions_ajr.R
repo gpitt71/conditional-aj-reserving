@@ -320,18 +320,39 @@ individual_vty_nf <- function(k,x.vals,yhat){
 
 
 
-individual_cost <- function(k,X,data.list){
+individual_resultsX <- function(k,X,data.list){
+  
   fit <- AalenJohansen::aalen_johansen(data.list,x=X)
   yhat <-  sapply(fit$p, last)
   x.vals <- fit$t
   
-  cond <- yhat <=1 & yhat >=0 & !is.na(yhat)
+  cond <- (yhat >1 | yhat <0) | is.na(yhat)
   
-  # yhat[cond] <- 1
-  yhat <- yhat[cond]
-  x.vals<-x.vals[cond]
+  yhat[cond]<-1
+  x.vals <- fit$t
+  # x.vals<- x.vals[cond]
   
-  return(cev(k,x=x.vals,y=yhat))}
+  cond2 = diff(c(0,yhat))<0
+  
+  while(sum(cond2)!=0){
+    
+    yhat <-yhat[!cond2]
+    x.vals <-x.vals[!cond2]
+    cond2 = diff(c(0,yhat))<0
+    
+  }
+  
+  ev <- cev(k,x=x.vals,y=yhat)
+  if(is.na(ev)){ev <- 0}
+  mment2 <- cev2(k,x=x.vals,y=yhat)
+  vty <- mment2-ev^2
+  if(is.na(mment2)){ev <- 0}
+  
+  crps_i=crps_computer(k=k,y=k+ev,x=x.vals,cdf_i=yhat)
+  
+  return(list(ultimate = ev+k,
+              variance=vty,
+              crps_i=crps_i))}
 
 recode.cl <- function(x){
   if(length(x) == 1){
@@ -378,7 +399,8 @@ cl.calculator<- function(dt){
   
   # variability 
   
-  sigmas[length(sigmas)] <- min((sigmas[length(sigmas)-1]^2)/sigmas[length(sigmas)-2],min(sigmas[length(sigmas)-1],sigmas[length(sigmas)-2]))
+  sigmas[length(sigmas)] <- min((sigmas[length(sigmas)-1]^2)/sigmas[length(sigmas)-2],
+                                min(sigmas[length(sigmas)-1],sigmas[length(sigmas)-2]))
   
   J <- dim(dt)[2]
   msep.Ri <- c()
@@ -401,8 +423,7 @@ cl.calculator<- function(dt){
     
   }
   
-  mck$Mack.S.E
-  sqrt(msep.Ri)
+  
   
   ## correlations
   
