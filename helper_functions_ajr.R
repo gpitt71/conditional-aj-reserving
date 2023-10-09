@@ -322,7 +322,7 @@ individual_vty_nf <- function(k,x.vals,yhat){
 
 individual_resultsX <- function(k,X,data.list){
   
-  fit <- AalenJohansen::aalen_johansen(data.list,x=X)
+  fit <- AalenJohansen::aalen_johansen(lapply(data.list,as.list),x=X)
   yhat <-  sapply(fit$p, last)
   x.vals <- fit$t
   
@@ -532,12 +532,94 @@ reformulate_state_space <- function(x, newk=4){
   
 }
 
+# Real data ----
 
 
+read.and.pp.data <- function(fname){
+  
+  
+  df <- read.csv(fname,
+                 header = T,
+                 colClasses = c(rep('character',5),
+                                'factor',
+                                'factor',
+                                'numeric'))
+  
+  # df <- df[(df$AM)>=20180101,]
+  df <- df[!is.na(df$incPaid),]
+  df <- df[df$incPaid>0,]
+  df <- df[df$incPaid<1e+06,]
+  
+  
+  df$development_period = floor((as.integer(df$DM)-1)/12)+1
+  # df$development_period= df$development_year+1
+  baseAM <- as.numeric(substr(df[1,'AM'],1,4))
+  acc.st = df$AM
+  year.a=as.integer(substr(acc.st ,1,4))-baseAM
+  df$accident_period=year.a
+  
+  rep.st = df$RM
+  year.r=as.integer(substr(rep.st ,1,4))-baseAM+1
+  df$reporting_period=year.r
+  
+  df = df %>%
+    group_by(Claim_number, Claim_type_key, development_period,accident_period) %>%
+    summarise(incPaid=sum(incPaid),
+              reporting_period=min(reporting_period)
+    ) %>%
+    mutate(calendar_period=development_period+accident_period)%>%
+    as.data.frame()
+  
+  df = df %>%
+    group_by(Claim_number) %>%
+    mutate(delta = c(rep(0,n()-1),1)) %>%
+    as.data.frame()
+  
+  return(df)
+  
+}
+
+clean.lt <- function(x){
+  J=dim(x)[2]
+  for(j in 1:J){
+    for(i in 1:J){
+      
+      if((i+j) > (J+1)){x[i,j]=NA}
+      
+    }}
+  return(x)}
 
 
+find.t.data <- function(x){
+  
+  setDT(x)
+  dt.tr <- x[,.(pays=sum(incPaid)),by=.(development_period,
+                    accident_period)]
+  
+  out <- as.triangle(dt.tr,
+              origin = 'accident_period',
+              dev='development_period',
+              value = 'pays')
+  
+  return(out)
+}
 
+encode.cc <- function(x,maximum.p){
+  x=x+1
+  x[length(x)] <- maximum.p
+  return(x)}
 
+encode.rbns <- function(x,y,ay,maximum.p,tsh=1e-08){
+  x=x+1
+  lx <- last(x)
+  if(lx==(maximum.p-ay)){
+    x<-c(x,maximum.p-ay)
+  }else{
+    x <- c(x, seq(lx+1,maximum.p-ay),maximum.p-ay)
+  }
+  return(list(events=x,
+              times=c(y,rep(tsh,length(x)-length(y)))))
+}
 
 
 
