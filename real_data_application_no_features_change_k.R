@@ -11,7 +11,9 @@ source('C:\\Users\\gpitt\\Documents\\GitHub\\conditional-aj-reserving\\helper_fu
 
 results = matrix(ncol=7)
 
-for(maximum.p in c(4,5,6,7,8)){
+maximum.p <- 6
+
+# for(maximum.p in c(4,5,6,7,8)){
   
   df = read.and.pp.data(fname='C:\\Users\\gpitt\\Documents\\Phd\\visiting\\dati\\data_ku\\final_claim_data.csv')
   
@@ -80,6 +82,20 @@ data2fit_list <-  split(data2fit,data2fit$Claim_number)
 data2fit <- lapply(data2fit_list, function(x){as.list(rbind(data.frame(times=0.,states=1),x[,c('times','states')]))})
 
 data2fit <- unname(data2fit)
+
+for(k in 4:(maximum.p)){
+  
+  cat(paste0('State space with k '),as.character(k),'\n')
+  
+  if(k!=maximum.p){
+    data.list.ref <- lapply(data2fit,reformulate_state_space,newk = k)
+    
+  }else{
+    
+    data.list.ref <-data2fit
+    
+    }
+
 
 fit1 <- AalenJohansen::aalen_johansen(data2fit)
 

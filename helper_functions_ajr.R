@@ -613,6 +613,22 @@ reformulate_state_space <- function(x, newk=4){
   
 }
 
+reformulate_state_space_X <- function(x, feature.name="X",newk=4){
+  
+  tmp<- as.data.table(x)
+  setDT(tmp)[states>=newk,states:=newk]
+  
+  tmp <- tmp[,.(times=sum(times)),by=states]
+  
+  tmp <- as.list(tmp[,c("times","states")])
+  
+  tmp[[feature.name]]=x[[feature.name]]
+  
+  return(tmp)
+  
+  
+}
+
 # Real data ----
 
 
@@ -702,7 +718,23 @@ encode.rbns <- function(x,y,ay,maximum.p,tsh=1e-08){
               times=c(y,rep(tsh,length(x)-length(y)))))
 }
 
-
+input_4_cl_case <- function(maximum.p){
+  
+  df = read.and.pp.data(fname='C:\\Users\\gpitt\\Documents\\Phd\\visiting\\dati\\data_ku\\final_claim_data.csv')
+  
+  df = df %>% mutate(incPaid=incPaid)
+  
+  df =df %>%
+    group_by(Claim_number) %>%
+    filter(!any(development_period > (maximum.p-1)))
+  
+  df=df  %>%
+    group_by(Claim_number) %>%
+    filter(1 %in%delta &(accident_period <= (maximum.p-1-1)))
+  
+  return(df)
+  
+}
 
 
 
