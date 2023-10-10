@@ -322,7 +322,7 @@ individual_vty_nf <- function(k,x.vals,yhat){
 
 individual_resultsX <- function(k,X,data.list){
   
-  fit <- AalenJohansen::aalen_johansen(lapply(data.list,as.list),x=X)
+  fit <- AalenJohansen::aalen_johansen(data.list,x=X)
   yhat <-  sapply(fit$p, last)
   x.vals <- fit$t
   
@@ -346,13 +346,94 @@ individual_resultsX <- function(k,X,data.list){
   if(is.na(ev)){ev <- 0}
   mment2 <- cev2(k,x=x.vals,y=yhat)
   vty <- mment2-ev^2
-  if(is.na(mment2)){ev <- 0}
+  if(is.na(mment2)){vty <- 0}
   
   crps_i=crps_computer(k=k,y=k+ev,x=x.vals,cdf_i=yhat)
   
   return(list(ultimate = ev+k,
               variance=vty,
-              crps_i=crps_i))}
+              crps_i=crps_i))
+  
+  }
+
+
+compute.ajr.models <- function(dt,X='Claim_type_key',data.list){
+  
+  tmp.x <- unique(sort(as.numeric(as.character(dt[[X]]))))
+  l <- list()
+  
+  for(i in tmp.x){
+    
+    fit <- AalenJohansen::aalen_johansen(data.list,x=i)
+    yhat <-  sapply(fit$p, last)
+    x.vals <- fit$t
+    cond <- (yhat >1 | yhat <0) | is.na(yhat)
+    
+    yhat[cond]<-1
+    x.vals <- fit$t
+    # x.vals<- x.vals[cond]
+    
+    cond2 = diff(c(0,yhat))<0
+    
+    while(sum(cond2)!=0){
+      
+      yhat <-yhat[!cond2]
+      x.vals <-x.vals[!cond2]
+      cond2 = diff(c(0,yhat))<0
+      
+    }
+    
+    l[[as.character(i)]] <- list(yhat=yhat,
+                                 x.vals=x.vals)
+    
+  }
+  
+  return(l)
+  
+}
+
+individual_results_X_w_pre_saved_models <- function(k,X,models.list){
+  
+  xi <- as.character(X)
+  
+  yhat <- models.list[[xi]]$yhat
+  x.vals <- models.list[[xi]]$x.vals
+  
+  # fit <- AalenJohansen::aalen_johansen(data.list,x=X)
+  # 
+  # 
+  # yhat <-  sapply(fit$p, last)
+  # x.vals <- fit$t
+  # 
+  # cond <- (yhat >1 | yhat <0) | is.na(yhat)
+  # 
+  # yhat[cond]<-1
+  # x.vals <- fit$t
+  # # x.vals<- x.vals[cond]
+  # 
+  # cond2 = diff(c(0,yhat))<0
+  # 
+  # while(sum(cond2)!=0){
+  #   
+  #   yhat <-yhat[!cond2]
+  #   x.vals <-x.vals[!cond2]
+  #   cond2 = diff(c(0,yhat))<0
+  #   
+  # }
+  
+  ev <- cev(k,x=x.vals,y=yhat)
+  if(is.na(ev)){ev <- 0}
+  mment2 <- cev2(k,x=x.vals,y=yhat)
+  vty <- mment2-ev^2
+  if(is.na(mment2)){vty <- 0}
+  
+  crps_i=crps_computer(k=k,y=k+ev,x=x.vals,cdf_i=yhat)
+  
+  return(list(ultimate = ev+k,
+              variance=vty,
+              crps_i=crps_i))
+  
+}
 
 recode.cl <- function(x){
   if(length(x) == 1){
