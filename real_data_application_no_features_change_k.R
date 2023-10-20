@@ -168,7 +168,7 @@ cl.data <- find.t.data(df)
 cl.tot <- cl.calculator(incr2cum(cl.data))
 
 results = rbind(results,
-                c(maximum.p,
+                c(k,
                   actual.uc,
                   (closed.uc+ibnr.uc+rbns.uc)/actual.uc-1,
                   sum(cl.tot$ultimate)/actual.uc-1,
@@ -192,7 +192,8 @@ results %>% xtable::xtable(digits=3) %>%print( include.rownames=FALSE)
 
 
 fname <- paste0("C:\\Users\\gpitt\\Documents\\GitHub\\conditional-aj-reserving\\results_csv\\real_data_no_features_",
-                'different_shapes',
+                'maxp_',
+                maximum.p,
                 "_",
                 format(Sys.time(), 
                        "%Y_%m_%d_%H_%M"),

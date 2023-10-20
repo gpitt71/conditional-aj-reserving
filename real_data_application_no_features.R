@@ -162,7 +162,7 @@ results = rbind(results,
                 )
 
 }
-
+results <- results[-1,]
 colnames(results) <- c("k",
                        "True amount",
                        "EI_ajr",
@@ -176,7 +176,6 @@ results %>% xtable::xtable(digits=3) %>%print( include.rownames=FALSE)
 
 
 fname <- paste0("C:\\Users\\gpitt\\Documents\\GitHub\\conditional-aj-reserving\\results_csv\\real_data_no_features_",
-                'different_shapes',
                 "_",
                 format(Sys.time(), 
                        "%Y_%m_%d_%H_%M"),

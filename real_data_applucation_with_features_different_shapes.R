@@ -130,7 +130,8 @@ data.list.ref <- lapply(data2fit, function(x){x[[3]]<-unique(x[[3]])
   
   out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_results_X_w_pre_saved_models(k,
                                                                                                X=Claim_type_key,
-                                                                                               models.list), by=.(Claim_number)]
+                                                                                               models.list), 
+                   by=.(Claim_number)]
   
   
   actual.uc=df %>%
