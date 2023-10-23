@@ -96,14 +96,14 @@ while(trial < 20){
     actual.tot <- sum(actual$ultimate)
     pred.tot <- sum(out$ultimate) +sum(closed$ultimate)
     cl.tot <- chain_ladder_computer(input.data$actual.data,width=width)
-    1-pred.tot/actual.tot
-    1-cl.tot$ultimate/actual.tot
+
     
     actual.tot <- sum(actual$ultimate)
     pred.tot <- sum(out$ultimate) +sum(closed$ultimate)
     cl.tot <- chain_ladder_computer(input.data$actual.data,width=width)
     
     crps_data <- full_join(x = out, y = rbns.data, by = "id")[order(id),]
+    
     out_crps <- crps_data[,.(crps_i=crps_computer(k=k,y=ultimate,x=x.vals,cdf_i=yhat)),by=.(id)]
     
     # 1-pred.tot/actual.tot

@@ -154,32 +154,44 @@ renamer.X <- function(x,y){
   return(tmp)}
 
 
+# crps_computer <- function(k,y,x,cdf_i){
+
+  # s_i = 1 - cdf_i
+  # # browser()
+  # temp.cond <- (x <= k)
+  # temp.which <- cdf_i[temp.cond]
+  # den <- (1-tail(temp.which,1))
+  # # browser()
+  # tmp2 <- !temp.cond & (x <= y)
+  # tmp3 <- !temp.cond & (x > y)
+  # 
+  # if(k<1e-03){return(sum(diff(c(0,x))*(s_i)^2))}
+  # 
+  # num <- sum(diff(c(k,x[tmp2])) *(cdf_i[tmp2])^2) + sum(diff(c(last(x[tmp2]),x[tmp3])) *(s_i[tmp3])^2)
+  # 
+  # if(is.na(num/den)){
+  #   
+  #   return(0)
+  #   
+  #   }else{
+  #     return(num/den)
+  # }}
+
+
+
 crps_computer <- function(k,y,x,cdf_i){
-  # browser()
+  
   s_i = 1 - cdf_i
-  # browser()
-  temp.cond <- (x <= k)
-  temp.which <- cdf_i[temp.cond]
-  den <- (1-tail(temp.which,1))
-  # browser()
-  tmp2 <- !temp.cond & (x <= y)
-  tmp3 <- !temp.cond & (x > y)
   
-  if(k<1e-03){return(sum(diff(c(0,x))*(s_i)^2))}
+  x.vals <- c(0,diff(x))
+
+  crps=sum((x.vals*(cdf_i^2))[x<=y])+sum((x.vals*(s_i^2))[x>y])
   
-  num <- sum(diff(c(k,x[tmp2])) *(cdf_i[tmp2])^2) + sum(diff(c(last(x[tmp2]),x[tmp3])) *(s_i[tmp3])^2)
-  
-  if(is.na(num/den)){
-    
-    return(0)
-    
-    }else{
-      return(num/den)
-  }
-  
-  
+  return(crps)  
   
 }
+
+
 
 simulate_mkvian_data <- function(rates = jump_rate, 
                                  dists = mark_dist,
@@ -357,7 +369,10 @@ individual_resultsX <- function(k,X,data.list){
   }
 
 
-compute.ajr.models <- function(dt,X='Claim_type_key',data.list){
+compute.ajr.models <- function(dt,
+                               true.ultimate,
+                               X='Claim_type_key',
+                               data.list){
   
   tmp.x <- unique(sort(as.numeric(as.character(dt[[X]]))))
   l <- list()
@@ -392,42 +407,19 @@ compute.ajr.models <- function(dt,X='Claim_type_key',data.list){
   
 }
 
-individual_results_X_w_pre_saved_models <- function(k,X,models.list){
-  
+individual_results_X_w_pre_saved_models <- function(k,true.ultimate,X,models.list){
   xi <- as.character(X)
   
   yhat <- models.list[[xi]]$yhat
   x.vals <- models.list[[xi]]$x.vals
   
-  # fit <- AalenJohansen::aalen_johansen(data.list,x=X)
-  # 
-  # 
-  # yhat <-  sapply(fit$p, last)
-  # x.vals <- fit$t
-  # 
-  # cond <- (yhat >1 | yhat <0) | is.na(yhat)
-  # 
-  # yhat[cond]<-1
-  # x.vals <- fit$t
-  # # x.vals<- x.vals[cond]
-  # 
-  # cond2 = diff(c(0,yhat))<0
-  # 
-  # while(sum(cond2)!=0){
-  #   
-  #   yhat <-yhat[!cond2]
-  #   x.vals <-x.vals[!cond2]
-  #   cond2 = diff(c(0,yhat))<0
-  #   
-  # }
-  
   ev <- cev(k,x=x.vals,y=yhat)
   if(is.na(ev)){ev <- 0}
-  mment2 <- cev2(k,x=x.vals,y=yhat)
+  mment2 <- 2*cev2(k,x=x.vals,y=yhat)
   vty <- mment2-ev^2
   if(is.na(mment2)){vty <- 0}
   
-  crps_i=crps_computer(k=k,y=k+ev,x=x.vals,cdf_i=yhat)
+  crps_i=crps_computer(k=k,y=true.ultimate,x=x.vals,cdf_i=yhat)
   
   return(list(ultimate = ev+k,
               variance=vty,

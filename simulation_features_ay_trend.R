@@ -78,10 +78,25 @@ for(trial in 1:20){
   rbns.data <- rbns.data[,.(k=last(times)),by=.(id)]
   rbns.data[["X"]] <- X[rbns.data$id]
   
-  
-  out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_resultsX(k,X=X,data.list),by=.(id)]
+  models.list <- compute.ajr.models(rbns.data,
+                                    X='X',
+                                    data.list=data.list)
   
   actual <- input.data$actual.data[,.(ultimate=last(times)),by=id]
+  
+  rbns.data <-merge(actual,rbns.data,by='id')
+  colnames(rbns.data)[2] <- 'true.ultimate'
+  # actual[rbns.data, on = 'id', true.ultimate := ultimate]
+  
+  # out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_resultsX(k,X=X,data.list),by=.(id)]
+  out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_results_X_w_pre_saved_models(k,
+                                                                                               true.ultimate=true.ultimate,
+                                                                                               X=X,
+                                                                                               models.list), 
+                   by=.(id)]
+  
+  
+  
   closed <- closed.data[,.(ultimate=last(times)),by=id]
   
   actual.tot <- sum(actual$ultimate)
@@ -200,9 +215,28 @@ for(trial in 1:20){
   rbns.data[["X"]] <- X[rbns.data$id]
   
   
-  out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_resultsX(k,X=X,data.list),by=.(id)]
+  # out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_resultsX(k,X=X,data.list),by=.(id)]
+  
+  # actual <- input.data$actual.data[,.(ultimate=last(times)),by=id]
+  models.list <- compute.ajr.models(rbns.data,
+                                    X='X',
+                                    data.list=data.list)
   
   actual <- input.data$actual.data[,.(ultimate=last(times)),by=id]
+  
+  rbns.data <-merge(actual,rbns.data,by='id')
+  colnames(rbns.data)[2] <- 'true.ultimate'
+  # actual[rbns.data, on = 'id', true.ultimate := ultimate]
+  
+  # out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_resultsX(k,X=X,data.list),by=.(id)]
+  out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_results_X_w_pre_saved_models(k,
+                                                                                               true.ultimate=true.ultimate,
+                                                                                               X=X,
+                                                                                               models.list), 
+                   by=.(id)]
+  
+  
+  
   closed <- closed.data[,.(ultimate=last(times)),by=id]
   
   actual.tot <- sum(actual$ultimate)
@@ -322,10 +356,27 @@ for(trial in 1:20){
   rbns.data <- rbns.data[,.(k=last(times)),by=.(id)]
   rbns.data[["X"]] <- X[rbns.data$id]
   
-  
-  out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_resultsX(k,X=X,data.list),by=.(id)]
+  models.list <- compute.ajr.models(rbns.data,
+                                    X='X',
+                                    data.list=data.list)
   
   actual <- input.data$actual.data[,.(ultimate=last(times)),by=id]
+  
+  rbns.data <-merge(actual,rbns.data,by='id')
+  colnames(rbns.data)[2] <- 'true.ultimate'
+  # actual[rbns.data, on = 'id', true.ultimate := ultimate]
+  
+  # out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_resultsX(k,X=X,data.list),by=.(id)]
+  out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_results_X_w_pre_saved_models(k,
+                                                                                               true.ultimate=true.ultimate,
+                                                                                               X=X,
+                                                                                               models.list), 
+                   by=.(id)]
+  
+  
+  # out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_resultsX(k,X=X,data.list),by=.(id)]
+  
+  # actual <- input.data$actual.data[,.(ultimate=last(times)),by=id]
   closed <- closed.data[,.(ultimate=last(times)),by=id]
   
   actual.tot <- sum(actual$ultimate)
@@ -451,11 +502,26 @@ for(trial in 1:20){
   
   rbns.data <- rbns.data[,.(k=last(times)),by=.(id)]
   rbns.data[["X"]] <- X[rbns.data$id]
-  
-  
-  out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_resultsX(k,X=X,data.list),by=.(id)]
+  models.list <- compute.ajr.models(rbns.data,
+                                    X='X',
+                                    data.list=data.list)
   
   actual <- input.data$actual.data[,.(ultimate=last(times)),by=id]
+  
+  rbns.data <-merge(actual,rbns.data,by='id')
+  colnames(rbns.data)[2] <- 'true.ultimate'
+  # actual[rbns.data, on = 'id', true.ultimate := ultimate]
+  
+  # out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_resultsX(k,X=X,data.list),by=.(id)]
+  out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_results_X_w_pre_saved_models(k,
+                                                                                               true.ultimate=true.ultimate,
+                                                                                               X=X,
+                                                                                               models.list), 
+                   by=.(id)]
+  
+  # out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_resultsX(k,X=X,data.list),by=.(id)]
+  # 
+  # actual <- input.data$actual.data[,.(ultimate=last(times)),by=id]
   closed <- closed.data[,.(ultimate=last(times)),by=id]
   
   actual.tot <- sum(actual$ultimate)
@@ -578,10 +644,26 @@ for(trial in 1:20){
   rbns.data <- rbns.data[,.(k=last(times)),by=.(id)]
   rbns.data[["X"]] <- X[rbns.data$id]
   
-  
-  out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_resultsX(k,X=X,data.list),by=.(id)]
+  models.list <- compute.ajr.models(rbns.data,
+                                    X='X',
+                                    data.list=data.list)
   
   actual <- input.data$actual.data[,.(ultimate=last(times)),by=id]
+  
+  rbns.data <-merge(actual,rbns.data,by='id')
+  colnames(rbns.data)[2] <- 'true.ultimate'
+  # actual[rbns.data, on = 'id', true.ultimate := ultimate]
+  
+  # out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_resultsX(k,X=X,data.list),by=.(id)]
+  out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_results_X_w_pre_saved_models(k,
+                                                                                               true.ultimate=true.ultimate,
+                                                                                               X=X,
+                                                                                               models.list), 
+                   by=.(id)]
+  
+  # out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_resultsX(k,X=X,data.list),by=.(id)]
+  
+  # actual <- input.data$actual.data[,.(ultimate=last(times)),by=id]
   closed <- closed.data[,.(ultimate=last(times)),by=id]
   
   actual.tot <- sum(actual$ultimate)
