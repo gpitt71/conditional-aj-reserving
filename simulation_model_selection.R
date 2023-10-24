@@ -20,6 +20,13 @@ input.pbties <- c(-1.41134747023148e-05, 5.818448310349e-07, 2.64574079945067e-0
                   0, 0, 0, -1.3274315082635e-05, 1.3274315082635e-05,
                   0, 0, 0, 0, 0)
 
+
+# input.pbties <-c(-3.87473643786946e-06, 7.75530168016601e-07, 1.92727077396385e-08, 9.37832380696512e-10, 3.07899572973252e-06,
+# 0, -6.0461063538271e-06, 1.40368477593149e-06, 3.24343294024007e-08, 4.60998724849321e-06,
+# 0, 0, -4.59531201287676e-06, 2.33954270788095e-06, 2.25576930499581e-06,
+# 0, 0, 0, -2.37851748950939e-06, 2.37851748950939e-06,
+# 0, 0, 0, 0, 0)
+
 width <- 5
 
 imx <- matrix(input.pbties,
@@ -50,7 +57,7 @@ V=1200
 trial <- 1
 ix2 = 0
 
-while( trial < 20){
+while( trial <= 20){
   
   set.seed(trial+ix2)
   # browser()
@@ -74,7 +81,7 @@ while( trial < 20){
   
   cond <- (yhat > 1 | yhat <0) | is.na(yhat)
   # print(max(yhat[!cond]))
-  if(max(yhat[!cond])>0.98){
+  # if(max(yhat[!cond])>0.98){
     # print(max(yhat[!cond]))
     yhat[cond] <- 1
     # tail(yhat)
@@ -92,25 +99,36 @@ while( trial < 20){
     }
     
     rbns.data <- rbns.data[,.(k=last(times)),by=.(id)]
-    out <- rbns.data[,.(ultimate=k+individual_cost_nf(k,x.vals,yhat),
-                        variance=individual_vty_nf(k,x.vals,yhat)),by=.(id)]
     
     actual <- input.data$actual.data[,.(ultimate=last(times)),by=id]
+    rbns.data <-merge(actual,rbns.data,by='id')
+    colnames(rbns.data)[2] <- 'true.ultimate'
+    
+    out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_results_nf(k,
+                                                                               true.ultimate=true.ultimate,
+                                                                               x.vals=x.vals,
+                                                                               yhat=yhat), 
+                     by=.(id)]
+    
+    # out <- rbns.data[,.(ultimate=k+individual_cost_nf(k,x.vals,yhat),
+    #                     variance=individual_vty_nf(k,x.vals,yhat)),by=.(id)]
+    # 
+    # actual <- input.data$actual.data[,.(ultimate=last(times)),by=id]
+    
     closed <- closed.data[,.(ultimate=last(times)),by=id]
     
     
     actual.tot <- sum(actual$ultimate)
     pred.tot <- sum(out$ultimate) +sum(closed$ultimate)
     cl.tot <- chain_ladder_computer(input.data$actual.data,width=width)
-    1-pred.tot/actual.tot
-    1-cl.tot$ultimate/actual.tot
+
     
     actual.tot <- sum(actual$ultimate)
     pred.tot <- sum(out$ultimate) +sum(closed$ultimate)
     cl.tot <- chain_ladder_computer(input.data$actual.data,width=width)
     
-    crps_data <- full_join(x = out, y = rbns.data, by = "id")[order(id),]
-    out_crps <- crps_data[,.(crps_i=crps_computer(k=k,y=ultimate,x=x.vals,cdf_i=yhat)),by=.(id)]
+    # crps_data <- full_join(x = out, y = rbns.data, by = "id")[order(id),]
+    # out_crps <- crps_data[,.(crps_i=crps_computer(k=k,y=ultimate,x=x.vals,cdf_i=yhat)),by=.(id)]
     
     # 1-pred.tot/actual.tot
     # 1-cl.tot$ultimate/actual.tot
@@ -122,11 +140,11 @@ while( trial < 20){
                               pred.tot,
                               cl.tot$ultimate,
                               sum(out$variance),
-                              mean(out_crps$crps_i[out_crps$crps_i>0],
+                              mean(out$crps_i[out$crps_i>0],
                                    na.rm=T)))
     
     trial <- trial+1
-  }
+  
   
 }
 
@@ -146,12 +164,21 @@ crps_dt <- rbind(crps_dt,
 ## newk 4 ----
 
 results <- matrix(ncol=5)
-
+# 
 input.pbties <- c(-1.41134747023148e-05, 5.818448310349e-07, 2.64574079945067e-06, 3.21143958772718e-07, 1.05647451130565e-05,
                   0, -1.56578768719176e-05, 9.9084450079893e-06, 3.56570861910867e-07, 5.3928610020174e-06,
                   0, 0, -2.16284547098169e-05, 1.35437786537905e-05, 8.08467605602645e-06,
                   0, 0, 0, -1.3274315082635e-05, 1.3274315082635e-05,
                   0, 0, 0, 0, 0)
+
+# input.pbties <-c(-3.87473643786946e-06, 7.75530168016601e-07, 1.92727077396385e-08, 9.37832380696512e-10, 3.07899572973252e-06,
+#                  0, -6.0461063538271e-06, 1.40368477593149e-06, 3.24343294024007e-08, 4.60998724849321e-06,
+#                  0, 0, -4.59531201287676e-06, 2.33954270788095e-06, 2.25576930499581e-06,
+#                  0, 0, 0, -2.37851748950939e-06, 2.37851748950939e-06,
+#                  0, 0, 0, 0, 0)
+
+
+
 
 width <- 5
 
@@ -183,7 +210,7 @@ V=1200
 trial <- 1
 ix2 <- 0
 newk = 4
-while(trial <20){
+while(trial <= 20){
   
   set.seed(trial+ix2)
   sim.2.fit <- simulate_mkvian_data(ap.volumes=rep(1200,width-1),tsh=1e-06,stdize=1)
@@ -207,7 +234,7 @@ while(trial <20){
   # tail(yhat[cond])
   cond <- (yhat >1 | yhat <0) | is.na(yhat)
   
-  if(max(yhat[!cond])>0.98){
+  # if(max(yhat[!cond])>0.98){
     # yhat <- yhat[cond]
     
     trial<-trial+1
@@ -227,10 +254,20 @@ while(trial <20){
     
     
     rbns.data <- rbns.data[,.(k=last(times)),by=.(id)]
-    out <- rbns.data[,.(ultimate=k+individual_cost_nf(k,x.vals,yhat),
-                        variance=individual_vty_nf(k,x.vals,yhat)),by=.(id)]
     
     actual <- input.data$actual.data[,.(ultimate=last(times)),by=id]
+    rbns.data <-merge(actual,rbns.data,by='id')
+    colnames(rbns.data)[2] <- 'true.ultimate'
+    
+    out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_results_nf(k,
+                                                                               true.ultimate=true.ultimate,
+                                                                               x.vals=x.vals,
+                                                                               yhat=yhat), 
+                     by=.(id)]
+    # out <- rbns.data[,.(ultimate=k+individual_cost_nf(k,x.vals,yhat),
+    #                     variance=individual_vty_nf(k,x.vals,yhat)),by=.(id)]
+    # 
+    # actual <- input.data$actual.data[,.(ultimate=last(times)),by=id]
     closed <- closed.data[,.(ultimate=last(times)),by=id]
     
     
@@ -238,8 +275,8 @@ while(trial <20){
     pred.tot <- sum(out$ultimate) +sum(closed$ultimate)
     cl.tot <- chain_ladder_computer(input.data$actual.data,width=width)
     
-    crps_data <- full_join(x = out, y = rbns.data, by = "id")[order(id),]
-    out_crps <- crps_data[,.(crps_i=crps_computer(k=k,y=ultimate,x=x.vals,cdf_i=yhat)),by=.(id)]
+    # crps_data <- full_join(x = out, y = rbns.data, by = "id")[order(id),]
+    # out_crps <- crps_data[,.(crps_i=crps_computer(k=k,y=ultimate,x=x.vals,cdf_i=yhat)),by=.(id)]
     
     # 1-pred.tot/actual.tot
     # 1-cl.tot$ultimate/actual.tot
@@ -250,9 +287,9 @@ while(trial <20){
                               pred.tot,
                               cl.tot$ultimate,
                               sum(out$variance),
-                              mean(out_crps$crps_i[out_crps$crps_i>0],
+                              mean(out$crps_i[out$crps_i>0],
                                    na.rm=T)))
-  }
+  # }
   
   
 }
@@ -312,7 +349,7 @@ trial <- 1
 ix2 <- 0
 newk<-width
 
-while(trial <20){
+while(trial <=50){
   set.seed(trial+ix2)
   sim.2.fit <- simulate_mkvian_data(ap.volumes=rep(1200,width-1),tsh=1e-06,stdize=1)
   ix2=ix2+1
@@ -333,7 +370,7 @@ while(trial <20){
   # tail(yhat[cond])
   cond <- (yhat >1 | yhat <0) | is.na(yhat)
   
-  if(max(yhat[!cond])>0.98){
+  # if(max(yhat[!cond])>0.98){
     # yhat <- yhat[cond]
     
     trial<-trial+1
@@ -353,10 +390,20 @@ while(trial <20){
     
     
     rbns.data <- rbns.data[,.(k=last(times)),by=.(id)]
-    out <- rbns.data[,.(ultimate=k+individual_cost_nf(k,x.vals,yhat),
-                        variance=individual_vty_nf(k,x.vals,yhat)),by=.(id)]
     
     actual <- input.data$actual.data[,.(ultimate=last(times)),by=id]
+    rbns.data <-merge(actual,rbns.data,by='id')
+    colnames(rbns.data)[2] <- 'true.ultimate'
+    
+    out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_results_nf(k,
+                                                                               true.ultimate=true.ultimate,
+                                                                               x.vals=x.vals,
+                                                                               yhat=yhat), 
+                     by=.(id)]
+    # out <- rbns.data[,.(ultimate=k+individual_cost_nf(k,x.vals,yhat),
+    #                     variance=individual_vty_nf(k,x.vals,yhat)),by=.(id)]
+    # 
+    # actual <- input.data$actual.data[,.(ultimate=last(times)),by=id]
     closed <- closed.data[,.(ultimate=last(times)),by=id]
     
     
@@ -364,21 +411,21 @@ while(trial <20){
     pred.tot <- sum(out$ultimate) +sum(closed$ultimate)
     cl.tot <- chain_ladder_computer(input.data$actual.data,width=width)
     
-    crps_data <- full_join(x = out, y = rbns.data, by = "id")[order(id),]
-    out_crps <- crps_data[,.(crps_i=crps_computer(k=k,y=ultimate,x=x.vals,cdf_i=yhat)),by=.(id)]
+    # crps_data <- full_join(x = out, y = rbns.data, by = "id")[order(id),]
+    # out_crps <- crps_data[,.(crps_i=crps_computer(k=k,y=ultimate,x=x.vals,cdf_i=yhat)),by=.(id)]
     
     # 1-pred.tot/actual.tot
     # 1-cl.tot$ultimate/actual.tot
     
-    if(is.na(mean(out_crps$crps_i))){print(sum(is.na(out_crps$crps_i)))}
+    # if(is.na(mean(out_crps$crps_i))){print(sum(is.na(out_crps$crps_i)))}
     
     results = rbind(results,c(actual.tot,
                               pred.tot,
                               cl.tot$ultimate,
                               sum(out$variance),
-                              mean(out_crps$crps_i[out_crps$crps_i>0],
+                              mean(out$crps_i[out$crps_i>0],
                                    na.rm=T)))
-  }
+  # }
   
   
 }
@@ -427,7 +474,7 @@ while(trial <20){
   # tail(yhat[cond])
   cond <- (yhat >1 | yhat <0) | is.na(yhat)
   
-  if(max(yhat[!cond])>0.98){
+  # if(max(yhat[!cond])>0.98){
     # yhat <- yhat[cond]
     
     trial<-trial+1
@@ -447,10 +494,20 @@ while(trial <20){
     
     
     rbns.data <- rbns.data[,.(k=last(times)),by=.(id)]
-    out <- rbns.data[,.(ultimate=k+individual_cost_nf(k,x.vals,yhat),
-                        variance=individual_vty_nf(k,x.vals,yhat)),by=.(id)]
     
     actual <- input.data$actual.data[,.(ultimate=last(times)),by=id]
+    rbns.data <-merge(actual,rbns.data,by='id')
+    colnames(rbns.data)[2] <- 'true.ultimate'
+    
+    out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_results_nf(k,
+                                                                               true.ultimate=true.ultimate,
+                                                                               x.vals=x.vals,
+                                                                               yhat=yhat), 
+                     by=.(id)]
+    # out <- rbns.data[,.(ultimate=k+individual_cost_nf(k,x.vals,yhat),
+    #                     variance=individual_vty_nf(k,x.vals,yhat)),by=.(id)]
+    # 
+    # actual <- input.data$actual.data[,.(ultimate=last(times)),by=id]
     closed <- closed.data[,.(ultimate=last(times)),by=id]
     
     
@@ -458,8 +515,8 @@ while(trial <20){
     pred.tot <- sum(out$ultimate) +sum(closed$ultimate)
     cl.tot <- chain_ladder_computer(input.data$actual.data,width=width)
     
-    crps_data <- full_join(x = out, y = rbns.data, by = "id")[order(id),]
-    out_crps <- crps_data[,.(crps_i=crps_computer(k=k,y=ultimate,x=x.vals,cdf_i=yhat)),by=.(id)]
+    # crps_data <- full_join(x = out, y = rbns.data, by = "id")[order(id),]
+    # out_crps <- crps_data[,.(crps_i=crps_computer(k=k,y=ultimate,x=x.vals,cdf_i=yhat)),by=.(id)]
     
     # 1-pred.tot/actual.tot
     # 1-cl.tot$ultimate/actual.tot
@@ -470,9 +527,9 @@ while(trial <20){
                               pred.tot,
                               cl.tot$ultimate,
                               sum(out$variance),
-                              mean(out_crps$crps_i[out_crps$crps_i>0],
+                              mean(out$crps_i[out$crps_i>0],
                                    na.rm=T)))
-  }
+  # }
   
   
 }
@@ -524,7 +581,7 @@ while(trial <20){
   # tail(yhat[cond])
   cond <- (yhat >1 | yhat <0) | is.na(yhat)
   
-  if(max(yhat[!cond])>0.98){
+  # if(max(yhat[!cond])>0.98){
     # yhat <- yhat[cond]
     
     trial<-trial+1
@@ -544,10 +601,21 @@ while(trial <20){
     
     
     rbns.data <- rbns.data[,.(k=last(times)),by=.(id)]
-    out <- rbns.data[,.(ultimate=k+individual_cost_nf(k,x.vals,yhat),
-                        variance=individual_vty_nf(k,x.vals,yhat)),by=.(id)]
     
     actual <- input.data$actual.data[,.(ultimate=last(times)),by=id]
+    rbns.data <-merge(actual,rbns.data,by='id')
+    colnames(rbns.data)[2] <- 'true.ultimate'
+    
+    out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_results_nf(k,
+                                                                               true.ultimate=true.ultimate,
+                                                                               x.vals=x.vals,
+                                                                               yhat=yhat), 
+                     by=.(id)]
+    
+    # out <- rbns.data[,.(ultimate=k+individual_cost_nf(k,x.vals,yhat),
+    #                     variance=individual_vty_nf(k,x.vals,yhat)),by=.(id)]
+    # 
+    # actual <- input.data$actual.data[,.(ultimate=last(times)),by=id]
     closed <- closed.data[,.(ultimate=last(times)),by=id]
     
     
@@ -555,8 +623,8 @@ while(trial <20){
     pred.tot <- sum(out$ultimate) +sum(closed$ultimate)
     cl.tot <- chain_ladder_computer(input.data$actual.data,width=width)
     
-    crps_data <- full_join(x = out, y = rbns.data, by = "id")[order(id),]
-    out_crps <- crps_data[,.(crps_i=crps_computer(k=k,y=ultimate,x=x.vals,cdf_i=yhat)),by=.(id)]
+    # crps_data <- full_join(x = out, y = rbns.data, by = "id")[order(id),]
+    # out_crps <- crps_data[,.(crps_i=crps_computer(k=k,y=ultimate,x=x.vals,cdf_i=yhat)),by=.(id)]
     
     # 1-pred.tot/actual.tot
     # 1-cl.tot$ultimate/actual.tot
@@ -567,9 +635,9 @@ while(trial <20){
                               pred.tot,
                               cl.tot$ultimate,
                               sum(out$variance),
-                              mean(out_crps$crps_i[out_crps$crps_i>0],
+                              mean(out$crps_i[out$crps_i>0],
                                    na.rm=T)))
-  }
+  # }
   
   
 }
@@ -653,7 +721,7 @@ while(trial <20){
   # tail(yhat[cond])
   cond <- (yhat >1 | yhat <0) | is.na(yhat)
   
-  if(max(yhat[!cond])>0.98){
+  # if(max(yhat[!cond])>0.98){
     # yhat <- yhat[cond]
     
     trial<-trial+1
@@ -673,10 +741,20 @@ while(trial <20){
     
     
     rbns.data <- rbns.data[,.(k=last(times)),by=.(id)]
-    out <- rbns.data[,.(ultimate=k+individual_cost_nf(k,x.vals,yhat),
-                        variance=individual_vty_nf(k,x.vals,yhat)),by=.(id)]
     
     actual <- input.data$actual.data[,.(ultimate=last(times)),by=id]
+    rbns.data <-merge(actual,rbns.data,by='id')
+    colnames(rbns.data)[2] <- 'true.ultimate'
+    
+    out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_results_nf(k,
+                                                                               true.ultimate=true.ultimate,
+                                                                               x.vals=x.vals,
+                                                                               yhat=yhat), 
+                     by=.(id)]
+    # out <- rbns.data[,.(ultimate=k+individual_cost_nf(k,x.vals,yhat),
+    #                     variance=individual_vty_nf(k,x.vals,yhat)),by=.(id)]
+    # 
+    # actual <- input.data$actual.data[,.(ultimate=last(times)),by=id]
     closed <- closed.data[,.(ultimate=last(times)),by=id]
     
     
@@ -684,8 +762,8 @@ while(trial <20){
     pred.tot <- sum(out$ultimate) +sum(closed$ultimate)
     cl.tot <- chain_ladder_computer(input.data$actual.data,width=width)
     
-    crps_data <- full_join(x = out, y = rbns.data, by = "id")[order(id),]
-    out_crps <- crps_data[,.(crps_i=crps_computer(k=k,y=ultimate,x=x.vals,cdf_i=yhat)),by=.(id)]
+    # crps_data <- full_join(x = out, y = rbns.data, by = "id")[order(id),]
+    # out_crps <- crps_data[,.(crps_i=crps_computer(k=k,y=ultimate,x=x.vals,cdf_i=yhat)),by=.(id)]
     
     # 1-pred.tot/actual.tot
     # 1-cl.tot$ultimate/actual.tot
@@ -696,9 +774,9 @@ while(trial <20){
                               pred.tot,
                               cl.tot$ultimate,
                               sum(out$variance),
-                              mean(out_crps$crps_i[out_crps$crps_i>0],
+                              mean(out$crps_i[out$crps_i>0],
                                    na.rm=T)))
-  }
+  # }
   
   
 }
@@ -747,7 +825,7 @@ while(trial <20){
   # tail(yhat[cond])
   cond <- (yhat >1 | yhat <0) | is.na(yhat)
   
-  if(max(yhat[!cond])>0.98){
+  # if(max(yhat[!cond])>0.98){
     # yhat <- yhat[cond]
     
     trial<-trial+1
@@ -767,10 +845,20 @@ while(trial <20){
     
     
     rbns.data <- rbns.data[,.(k=last(times)),by=.(id)]
-    out <- rbns.data[,.(ultimate=k+individual_cost_nf(k,x.vals,yhat),
-                        variance=individual_vty_nf(k,x.vals,yhat)),by=.(id)]
     
     actual <- input.data$actual.data[,.(ultimate=last(times)),by=id]
+    rbns.data <-merge(actual,rbns.data,by='id')
+    colnames(rbns.data)[2] <- 'true.ultimate'
+    
+    out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_results_nf(k,
+                                                                               true.ultimate=true.ultimate,
+                                                                               x.vals=x.vals,
+                                                                               yhat=yhat), 
+                     by=.(id)]
+    # out <- rbns.data[,.(ultimate=k+individual_cost_nf(k,x.vals,yhat),
+    #                     variance=individual_vty_nf(k,x.vals,yhat)),by=.(id)]
+    # 
+    # actual <- input.data$actual.data[,.(ultimate=last(times)),by=id]
     closed <- closed.data[,.(ultimate=last(times)),by=id]
     
     
@@ -778,8 +866,8 @@ while(trial <20){
     pred.tot <- sum(out$ultimate) +sum(closed$ultimate)
     cl.tot <- chain_ladder_computer(input.data$actual.data,width=width)
     
-    crps_data <- full_join(x = out, y = rbns.data, by = "id")[order(id),]
-    out_crps <- crps_data[,.(crps_i=crps_computer(k=k,y=ultimate,x=x.vals,cdf_i=yhat)),by=.(id)]
+    # crps_data <- full_join(x = out, y = rbns.data, by = "id")[order(id),]
+    # out_crps <- crps_data[,.(crps_i=crps_computer(k=k,y=ultimate,x=x.vals,cdf_i=yhat)),by=.(id)]
     
     # 1-pred.tot/actual.tot
     # 1-cl.tot$ultimate/actual.tot
@@ -790,9 +878,9 @@ while(trial <20){
                               pred.tot,
                               cl.tot$ultimate,
                               sum(out$variance),
-                              mean(out_crps$crps_i[out_crps$crps_i>0],
+                              mean(out$crps_i[out$crps_i>0],
                                    na.rm=T)))
-  }
+  # }
   
   
 }
@@ -844,7 +932,7 @@ while(trial <20){
   # tail(yhat[cond])
   cond <- (yhat >1 | yhat <0) | is.na(yhat)
   
-  if(max(yhat[!cond])>0.98){
+  # if(max(yhat[!cond])>0.98){
     # yhat <- yhat[cond]
     
     trial<-trial+1
@@ -864,10 +952,20 @@ while(trial <20){
     
     
     rbns.data <- rbns.data[,.(k=last(times)),by=.(id)]
-    out <- rbns.data[,.(ultimate=k+individual_cost_nf(k,x.vals,yhat),
-                        variance=individual_vty_nf(k,x.vals,yhat)),by=.(id)]
     
     actual <- input.data$actual.data[,.(ultimate=last(times)),by=id]
+    rbns.data <-merge(actual,rbns.data,by='id')
+    colnames(rbns.data)[2] <- 'true.ultimate'
+    
+    out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_results_nf(k,
+                                                                               true.ultimate=true.ultimate,
+                                                                               x.vals=x.vals,
+                                                                               yhat=yhat), 
+                     by=.(id)]
+    # out <- rbns.data[,.(ultimate=k+individual_cost_nf(k,x.vals,yhat),
+    #                     variance=individual_vty_nf(k,x.vals,yhat)),by=.(id)]
+    # 
+    # actual <- input.data$actual.data[,.(ultimate=last(times)),by=id]
     closed <- closed.data[,.(ultimate=last(times)),by=id]
     
     
@@ -875,8 +973,8 @@ while(trial <20){
     pred.tot <- sum(out$ultimate) +sum(closed$ultimate)
     cl.tot <- chain_ladder_computer(input.data$actual.data,width=width)
     
-    crps_data <- full_join(x = out, y = rbns.data, by = "id")[order(id),]
-    out_crps <- crps_data[,.(crps_i=crps_computer(k=k,y=ultimate,x=x.vals,cdf_i=yhat)),by=.(id)]
+    # crps_data <- full_join(x = out, y = rbns.data, by = "id")[order(id),]
+    # out_crps <- crps_data[,.(crps_i=crps_computer(k=k,y=ultimate,x=x.vals,cdf_i=yhat)),by=.(id)]
     
     # 1-pred.tot/actual.tot
     # 1-cl.tot$ultimate/actual.tot
@@ -887,9 +985,9 @@ while(trial <20){
                               pred.tot,
                               cl.tot$ultimate,
                               sum(out$variance),
-                              mean(out_crps$crps_i[out_crps$crps_i>0],
+                              mean(out$crps_i[out$crps_i>0],
                                    na.rm=T)))
-  }
+  # }
   
   
 }
@@ -937,7 +1035,7 @@ while(trial <20){
   # tail(yhat[cond])
   cond <- (yhat >1 | yhat <0) | is.na(yhat)
   
-  if(max(yhat[!cond])>0.98){
+  # if(max(yhat[!cond])>0.98){
     # yhat <- yhat[cond]
     
     trial<-trial+1
@@ -957,10 +1055,20 @@ while(trial <20){
     
     
     rbns.data <- rbns.data[,.(k=last(times)),by=.(id)]
-    out <- rbns.data[,.(ultimate=k+individual_cost_nf(k,x.vals,yhat),
-                        variance=individual_vty_nf(k,x.vals,yhat)),by=.(id)]
     
     actual <- input.data$actual.data[,.(ultimate=last(times)),by=id]
+    rbns.data <-merge(actual,rbns.data,by='id')
+    colnames(rbns.data)[2] <- 'true.ultimate'
+    
+    out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_results_nf(k,
+                                                                               true.ultimate=true.ultimate,
+                                                                               x.vals=x.vals,
+                                                                               yhat=yhat), 
+                     by=.(id)]
+    # out <- rbns.data[,.(ultimate=k+individual_cost_nf(k,x.vals,yhat),
+    #                     variance=individual_vty_nf(k,x.vals,yhat)),by=.(id)]
+    # 
+    # actual <- input.data$actual.data[,.(ultimate=last(times)),by=id]
     closed <- closed.data[,.(ultimate=last(times)),by=id]
     
     
@@ -968,8 +1076,8 @@ while(trial <20){
     pred.tot <- sum(out$ultimate) +sum(closed$ultimate)
     cl.tot <- chain_ladder_computer(input.data$actual.data,width=width)
     
-    crps_data <- full_join(x = out, y = rbns.data, by = "id")[order(id),]
-    out_crps <- crps_data[,.(crps_i=crps_computer(k=k,y=ultimate,x=x.vals,cdf_i=yhat)),by=.(id)]
+    # crps_data <- full_join(x = out, y = rbns.data, by = "id")[order(id),]
+    # out_crps <- crps_data[,.(crps_i=crps_computer(k=k,y=ultimate,x=x.vals,cdf_i=yhat)),by=.(id)]
     
     # 1-pred.tot/actual.tot
     # 1-cl.tot$ultimate/actual.tot
@@ -980,9 +1088,9 @@ while(trial <20){
                               pred.tot,
                               cl.tot$ultimate,
                               sum(out$variance),
-                              mean(out_crps$crps_i[out_crps$crps_i>0],
+                              mean(out$crps_i[out$crps_i>0],
                                    na.rm=T)))
-  }
+  # }
   
   
 }
@@ -1001,6 +1109,7 @@ crps_dt <- rbind(crps_dt,
                    mcrps=mean(results$mcrps)))
 
 
+fwrite(crps_dt, file='C:/Users/gpitt/Documents/GitHub/conditional-aj-reserving/results_csv/crpss.csv')
 
 # Width 8 ----
 

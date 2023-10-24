@@ -177,8 +177,6 @@ renamer.X <- function(x,y){
   #     return(num/den)
   # }}
 
-
-
 crps_computer <- function(k,y,x,cdf_i){
   
   s_i = 1 - cdf_i
@@ -190,8 +188,6 @@ crps_computer <- function(k,y,x,cdf_i){
   return(crps)  
   
 }
-
-
 
 simulate_mkvian_data <- function(rates = jump_rate, 
                                  dists = mark_dist,
@@ -357,7 +353,7 @@ individual_resultsX <- function(k,X,data.list){
   ev <- cev(k,x=x.vals,y=yhat)
   if(is.na(ev)){ev <- 0}
   mment2 <- cev2(k,x=x.vals,y=yhat)
-  vty <- mment2-ev^2
+  vty <- 2*mment2-ev^2
   if(is.na(mment2)){vty <- 0}
   
   crps_i=crps_computer(k=k,y=k+ev,x=x.vals,cdf_i=yhat)
@@ -404,6 +400,23 @@ compute.ajr.models <- function(dt,
   }
   
   return(l)
+  
+}
+
+
+individual_results_nf <- function(k,true.ultimate,x.vals,yhat){
+
+  ev <- cev(k,x=x.vals,y=yhat)
+  if(is.na(ev)){ev <- 0}
+  mment2 <- 2*cev2(k,x=x.vals,y=yhat)
+  vty <- mment2-ev^2
+  if(is.na(mment2)){vty <- 0}
+  
+  crps_i=crps_computer(k=k,y=true.ultimate,x=x.vals,cdf_i=yhat)
+  
+  return(list(ultimate = ev+k,
+              variance=vty,
+              crps_i=crps_i))
   
 }
 
@@ -477,7 +490,7 @@ cl.calculator<- function(dt){
   
   J <- dim(dt)[2]
   msep.Ri <- c()
-  
+  pv.Ri <- c()
   for(i in 2:J){
     
     external.cms <- last(dt.hat[i,])^2
@@ -493,6 +506,8 @@ cl.calculator<- function(dt){
     tmp.ri <- external.cms*sum(tmp.sigmas/tmp.fs*(n1+n2))
     
     msep.Ri <- c(msep.Ri,tmp.ri)
+    
+    pv.Ri <- c(pv.Ri,external.cms*sum(tmp.sigmas/tmp.fs*(n1)))
     
   }
   
@@ -524,6 +539,7 @@ cl.calculator<- function(dt){
   
   l <- list(
     ultimate = dt.hat[,J],
+    process.error.i=sqrt(sum(pv.Ri)),
     msep=sqrt(sum(c(cors.Ri[1:(J-2)],0)+msep.Ri)))
   
   
@@ -568,7 +584,8 @@ chain_ladder_computer <- function(data.set,width){
   
   return(list(
     ultimate=sum(cl.output$ultimate),
-    ultimate.se=cl.output$msep))
+    ultimate.se=cl.output$msep,
+    process.se=cl.output$process.error.i))
   
 }
 

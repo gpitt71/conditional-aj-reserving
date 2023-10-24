@@ -42,7 +42,7 @@ jmx <-  matrix(rep(jrate,width),byrow = F,ncol=width)
 imx[1:(width-1),] <- imx[1:(width-1),]/jmx[1:(width-1),]
 
 
-ap.volumes <- rep(V,width-1)
+ap.volumes <- rep(V,width-1) -seq(0,100*(width-2),by=100)
 # X <- runif(sum(ap.volumes),min=0,max=1)
 # X <- rlnorm(sum(ap.volumes),meanlog = .2,sdlog=1)
 
@@ -107,7 +107,7 @@ for(trial in 1:20){
                              pred.tot,
                              cl.tot$ultimate,
                              sqrt(sum(out$variance)),
-                             cl.tot$ultimate.se,
+                             cl.tot$process.se,
                              mean(out$crps_i)))
   
 }
@@ -178,7 +178,7 @@ lambda <- function(t){
 
 V=1200
 results <- matrix(ncol=6)
-ap.volumes <- rep(V,width-1)
+ap.volumes <- rep(V,width-1) -seq(0,100*(width-2),by=100)
 # X <- runif(sum(ap.volumes),min=0,max=1)
 # X <- rlnorm(sum(ap.volumes),meanlog = .2,sdlog=1)
 
@@ -247,7 +247,7 @@ for(trial in 1:20){
                              pred.tot,
                              cl.tot$ultimate,
                              sqrt(sum(out$variance)),
-                             cl.tot$ultimate.se,
+                             cl.tot$process.se,
                              mean(out$crps_i)))
   
 }
@@ -320,7 +320,7 @@ lambda <- function(t){
 
 V=1200
 results <- matrix(ncol=6)
-ap.volumes <- rep(V,width-1)
+ap.volumes <- rep(V,width-1)-seq(0,100*(width-2),by=100)
 # X <- runif(sum(ap.volumes),min=0,max=1)
 # X <- rlnorm(sum(ap.volumes),meanlog = .2,sdlog=1)
 
@@ -387,7 +387,7 @@ for(trial in 1:20){
                              pred.tot,
                              cl.tot$ultimate,
                              sqrt(sum(out$variance)),
-                             cl.tot$ultimate.se,
+                             cl.tot$process.se,
                              mean(out$crps_i)))
   
 }
@@ -467,7 +467,7 @@ lambda <- function(t){
 
 V=1200
 results <- matrix(ncol=6)
-ap.volumes <- rep(V,width-1)
+ap.volumes <- rep(V,width-1)-seq(0,100*(width-2),by=100)
 # X <- runif(sum(ap.volumes),min=0,max=1)
 # X <- rlnorm(sum(ap.volumes),meanlog = .2,sdlog=1)
 
@@ -532,7 +532,7 @@ for(trial in 1:20){
                              pred.tot,
                              cl.tot$ultimate,
                              sqrt(sum(out$variance)),
-                             cl.tot$ultimate.se,
+                             cl.tot$process.se,
                              mean(out$crps_i)))
   
 }
@@ -608,7 +608,7 @@ lambda <- function(t){
 
 V=1200
 results <- matrix(ncol=6)
-ap.volumes <- rep(V,width-1)
+ap.volumes <- rep(V,width-1)-seq(0,100*(width-2),by=100)
 # X <- runif(sum(ap.volumes),min=0,max=1)
 # X <- rlnorm(sum(ap.volumes),meanlog = .2,sdlog=1)
 
@@ -674,7 +674,7 @@ for(trial in 1:20){
                              pred.tot,
                              cl.tot$ultimate,
                              sqrt(sum(out$variance)),
-                             cl.tot$ultimate.se,
+                             cl.tot$process.se,
                              mean(out$crps_i)))
   
 }

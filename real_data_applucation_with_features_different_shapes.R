@@ -11,8 +11,6 @@ source('C:\\Users\\gpitt\\Documents\\GitHub\\conditional-aj-reserving\\helper_fu
 
 df = read.and.pp.data(fname='C:\\Users\\gpitt\\Documents\\Phd\\visiting\\dati\\data_ku\\final_claim_data.csv')
 
-
-
 for(maximum.p in c(4,5,6,7,8)){
 
 df = df %>% mutate(incPaid=incPaid)

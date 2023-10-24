@@ -6,6 +6,9 @@ library(xtable)
 library(ggplot2)
 library(dplyr)
 library(tidyr)
+
+divided.by = 1e+07
+
 #
 
 locn <- "C:\\Users\\gpitt\\Documents\\GitHub\\conditional-aj-reserving\\results_csv\\%s"
@@ -31,11 +34,12 @@ fname_no_trend <- c(
 'simulation_no_features_all_records_5_2023_10_18_17_17.csv',
 'simulation_no_features_all_records_6_2023_10_18_17_18.csv')
 
-fname_no_trend <- c('simulation_no_features_all_records_4_2023_10_13_11_39.csv',
-'simulation_no_features_all_records_5_2023_10_13_11_44.csv',
-'simulation_no_features_all_records_6_2023_10_16_15_33.csv',
-'simulation_no_features_all_records_7_2023_10_13_11_46.csv',
-'simulation_no_features_all_records_8_2023_10_13_11_48.csv')
+
+
+fname_no_trend <- c('simulation_no_features_all_records_4_2023_10_23_11_57.csv',
+'simulation_no_features_all_records_5_2023_10_23_11_58.csv',
+'simulation_no_features_all_records_6_2023_10_23_12_00.csv',
+'simulation_no_features_all_records_7_2023_10_23_15_16.csv')
 
 
 dt <- data.table()
@@ -57,11 +61,10 @@ dt[,aj.msep:=sqrt(variance)]
 
 # AY trend ----
 
-fname_trend <- c('simulation_aytrend4_2023_10_12_14_27.csv',
-                 'simulation_aytrend5_2023_10_12_15_34.csv',
-                 'simulation_aytrend6_2023_10_16_15_25.csv',
-                 'simulation_aytrend7_2023_10_12_16_02.csv',
-                 'simulation_aytrend8_2023_10_12_16_31.csv')
+fname_trend <- c('simulation_aytrend4_2023_10_23_12_52.csv',
+                 'simulation_aytrend5_2023_10_23_12_53.csv',
+                 'simulation_aytrend6_2023_10_23_12_54.csv',
+                 'simulation_aytrend7_2023_10_23_12_56.csv')
 
 
 dt1 <- data.table()
@@ -78,11 +81,11 @@ dt.tot <- rbind(dt[,c("actual.tot","pred.tot","cl.tot","aj.msep","cl.msep","k","
                 dt1[,c("actual.tot","pred.tot","cl.tot","aj.msep","cl.msep","k","features")])
 
 
-dt.tot[,.(actual.tot = mean(actual.tot),
+dt.tot[,.(actual.tot = mean(actual.tot)/divided.by,
           ei_aj=mean(pred.tot/actual.tot-1),
           ei_cl=mean(cl.tot/actual.tot-1),
-          aj.msep=mean(aj.msep),
-          cl.msep=mean(cl.msep)
+          aj.msep=mean(aj.msep)/divided.by,
+          cl.msep=mean(cl.msep)/divided.by
           ),
        by=.(k,
             features)][order(k),] %>%
@@ -139,6 +142,9 @@ df_tot_rd[,c("k",
              "mean_crps")] %>%
   xtable(digits=3)%>%
   print(include.rownames=FALSE)
+
+
+
 
 
 
