@@ -5,14 +5,14 @@ library(dplyr)
 library(ChainLadder)
 library(ggplot2)
 
-source('C:\\Users\\gpitt\\Documents\\GitHub\\conditional-aj-reserving\\helper_functions_ajr.R')
+source('conditional-aj-reserving\\helper_functions_ajr.R')
 
 # Construct the model ----
 results = matrix(ncol=9)  
 maximum.p <- 6
 for(max.k in 4:(maximum.p)){
 
-df = read.and.pp.data(fname='C:\\Users\\gpitt\\Documents\\Phd\\visiting\\dati\\data_ku\\final_claim_data.csv')
+df = read.and.pp.data(fname='final_claim_data.csv')
 
 df = df %>% mutate(incPaid=incPaid)
   
@@ -147,20 +147,14 @@ ibnr.claims<-ibnr.claims %>%
   
   rbns.data <-merge(actual,rbns.data,by='Claim_number')
   
-  # out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_resultsX(k,X=X,data.list),by=.(id)]
-  
+
   out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_results_X_w_pre_saved_models(k,
                                                                                                true.ultimate=true.ultimate,
                                                                                                X=Claim_type_key ,
                                                                                                models.list), 
                    by=.(Claim_number)]
   
-  
-  # out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_results_X_w_pre_saved_models(k,
-  #                                                                                              X=Claim_type_key,
-  #                                                                                              models.list), by=.(Claim_number)]
-  # 
-  # 
+
   actual.uc=df %>%
     ungroup() %>%
     filter(accident_period<=(maximum.p-2)&development_period<=(maximum.p-1)) %>%
@@ -272,7 +266,7 @@ colnames(results) <- c("k",
 
 results %>% xtable::xtable(digits=3) %>%print(include.rownames=FALSE)
 
-fname <- paste0("C:\\Users\\gpitt\\Documents\\GitHub\\conditional-aj-reserving\\results_csv\\real_data_w_features_",
+fname <- paste0("conditional-aj-reserving\\results_csv\\real_data_w_features_",
                 'maxp_',
                 maximum.p,
                 "_",

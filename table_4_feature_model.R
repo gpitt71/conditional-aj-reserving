@@ -109,16 +109,6 @@ data.list.ref <- lapply(data2fit, function(x){x[[3]]<-unique(x[[3]])
                                                 })
     
 
-# for(k in 4:(maximum.p)){
-#   
-#   cat(paste0('State space with k '),as.character(k),'\n')
-#   
-#   if(k!=8){
-#   data.list.ref <- lapply(data2fit,reformulate_state_space_X,newk = k)
-#   
-#   }else{
-#     
-#     data.list.ref <-data2fit}
   
   rbns.data <- rbns.claims.fit[,times:=cumsum(times),by=Claim_number][,.(k=last(times)),by=.(Claim_number)]
   
@@ -138,19 +128,14 @@ data.list.ref <- lapply(data2fit, function(x){x[[3]]<-unique(x[[3]])
   
   rbns.data <-merge(actual,rbns.data,by='Claim_number')
   
-  # out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_resultsX(k,X=X,data.list),by=.(id)]
-  
+
   out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_results_X_w_pre_saved_models(k,
                                                                                                true.ultimate=true.ultimate,
                                                                                                X=Claim_type_key ,
                                                                                                models.list), 
                    by=.(Claim_number)]
   
-  # out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_results_X_w_pre_saved_models(k,
-  #                                                                                              X=Claim_type_key,
-  #                                                                                              models.list), 
-  #                  by=.(Claim_number)]
-  
+
   
   actual.uc=df %>%
     ungroup() %>%
@@ -269,7 +254,7 @@ colnames(results) <- c("k",
 
 results %>% xtable::xtable(digits=3) %>%print(include.rownames=FALSE)
 
-fname <- paste0("C:\\Users\\gpitt\\Documents\\GitHub\\conditional-aj-reserving\\results_csv\\real_data_w_features_",
+fname <- paste0("conditional-aj-reserving\\results_csv\\real_data_w_features_",
                 "_",
                  format(Sys.time(), 
                  "%Y_%m_%d_%H_%M"),

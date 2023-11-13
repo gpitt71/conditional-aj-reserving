@@ -5,7 +5,7 @@ library(dplyr)
 library(ChainLadder)
 library(ggplot2)
 
-source('C:\\Users\\gpitt\\Documents\\GitHub\\conditional-aj-reserving\\helper_functions_ajr.R')
+source('conditional-aj-reserving\\helper_functions_ajr.R')
 
 # Construct the model ----
 
@@ -202,8 +202,6 @@ actual.uc=df %>%
   filter(accident_period<=(maximum.p-2)&development_period<=(maximum.p-1)) %>%
   summarise(uc=sum(incPaid)) %>% unlist()
 
-# crps_data <- full_join(x = out, y = rbns.data, by = "Claim_number")[order(Claim_number),]
-# out_crps <- crps_data[,.(crps_i=crps_computer(k=k,y=ultimate,x=x.vals,cdf_i=yhat)),by=.(Claim_number)]
 
 
 
@@ -242,7 +240,7 @@ colnames(results) <- c("k",
 results %>% xtable::xtable(digits=3) %>%print( include.rownames=FALSE)
 
 
-fname <- paste0("C:\\Users\\gpitt\\Documents\\GitHub\\conditional-aj-reserving\\results_csv\\real_data_no_features_",
+fname <- paste0("conditional-aj-reserving\\results_csv\\real_data_no_features_",
                 'maxp_',
                 maximum.p,
                 "_",

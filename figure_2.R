@@ -5,7 +5,7 @@ library(dplyr)
 library(ChainLadder)
 library(ggplot2)
 library(scales)
-source('C:\\Users\\gpitt\\Documents\\GitHub\\conditional-aj-reserving\\helper_functions_ajr.R')
+source('conditional-aj-reserving\\helper_functions_ajr.R')
 unit=1e+06
 
 # width 4 ----

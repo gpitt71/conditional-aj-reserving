@@ -123,8 +123,6 @@ out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_results_nf(k,
                                                                            yhat=yhat), 
                  by=.(Claim_number)]
 
-# out <- rbns.data[,.(ultimate=k+individual_cost_nf(k,x.vals,yhat),
-#                     variance=individual_vty_nf(k,x.vals,yhat)),by=.(Claim_number)]
 
 fj <- NULL
 
@@ -179,10 +177,6 @@ actual.uc=df %>%
   filter(accident_period<=(maximum.p-2)&development_period<=(maximum.p-1)) %>%
   summarise(uc=sum(incPaid)) %>% unlist()
 
-# crps_data <- full_join(x = out, y = rbns.data, by = "Claim_number")[order(Claim_number),]
-# out_crps <- crps_data[,.(crps_i=crps_computer(k=k,y=ultimate,x=x.vals,cdf_i=yhat)),by=.(Claim_number)]
-
-
 
 cl.data <- find.t.data(df)
 cl.tot <- cl.calculator(incr2cum(cl.data))
@@ -218,7 +212,7 @@ colnames(results) <- c("k",
 results %>% xtable::xtable(digits=3) %>%print( include.rownames=FALSE)
 
 
-fname <- paste0("C:\\Users\\gpitt\\Documents\\GitHub\\conditional-aj-reserving\\results_csv\\real_data_no_features_",
+fname <- paste0("conditional-aj-reserving\\results_csv\\real_data_no_features_",
                 "_",
                 format(Sys.time(), 
                        "%Y_%m_%d_%H_%M"),
