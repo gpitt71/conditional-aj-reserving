@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/691535587.svg)](https://zenodo.org/doi/10.5281/zenodo.10118895)
+
 # Individual claims reserving using the Aalen-Johansen estimator
 
 This repository contains the code to replicate the manuscript INDIVIDUAL CLAIMS RESERVING USING THE AALEN-JOHANSEN ESTIMATOR. 
