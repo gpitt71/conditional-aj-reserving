@@ -2,7 +2,7 @@
 
 # Individual claims reserving using the Aalen-Johansen estimator
 
-This repository contains the code to replicate the manuscript INDIVIDUAL CLAIMS RESERVING USING THE AALEN-JOHANSEN ESTIMATOR. 
+This repository contains the code to replicate the manuscript [Individual claims reserving using the Aalen-Johansen estimator](https://arxiv.org/submit/5231629). 
 
 The replication material is organized as described in this file and it can be used for replicating exactly the results of our manuscript.
 
