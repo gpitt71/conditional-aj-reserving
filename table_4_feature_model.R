@@ -5,14 +5,14 @@ library(dplyr)
 library(ChainLadder)
 library(ggplot2)
 
-source('C:\\Users\\gpitt\\Documents\\GitHub\\conditional-aj-reserving\\helper_functions_ajr.R')
+source('conditional-aj-reserving\\helper_functions_ajr.R')
 
 # Construct the model ----
 results = matrix(ncol=9)  
 
 for(maximum.p in c(4,5,6,7)){
 
-df = read.and.pp.data(fname='C:\\Users\\gpitt\\Documents\\Phd\\visiting\\dati\\data_ku\\final_claim_data.csv')  
+df = read.and.pp.data(fname='final_claim_data.csv')  
 
 df = df %>% mutate(incPaid=incPaid)
   

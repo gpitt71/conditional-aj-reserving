@@ -5,7 +5,7 @@ library(dplyr)
 library(ChainLadder)
 library(ggplot2)
 
-source('C:\\Users\\gpitt\\Documents\\GitHub\\conditional-aj-reserving\\helper_functions_ajr.R')
+source('conditional-aj-reserving\\helper_functions_ajr.R')
 
 # Width 4 ----
 input.pbties <- c(-7.11758383885783e-06, 1.39183828093592e-06, 5.73888289022062e-08, 5.66835672901971e-06,
@@ -285,7 +285,7 @@ colnames(results) <- c('actual.tot','pred.tot','cl.tot','variance','cl.msep','mc
 
 
 
-locn = "C:\\Users\\gpitt\\Documents\\GitHub\\conditional-aj-reserving\\results_csv\\%s"
+locn = " conditional-aj-reserving\\results_csv\\%s"
 finame=paste0("simulation_",
               'aytrend_interceptmodel_all_records_',
               width,

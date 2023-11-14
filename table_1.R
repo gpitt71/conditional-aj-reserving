@@ -5,7 +5,7 @@ library(dplyr)
 library(ChainLadder)
 library(ggplot2)
 
-source('C:\\Users\\gpitt\\Documents\\GitHub\\conditional-aj-reserving\\helper_functions_ajr.R')
+source(' conditional-aj-reserving\\helper_functions_ajr.R')
 
 # Width 4 ----
 
@@ -133,7 +133,7 @@ colnames(results) <- c('actual.tot',
 
 results$true.ultimate=ev*sum(V*(width-1))
 
-locn = "C:\\Users\\gpitt\\Documents\\GitHub\\conditional-aj-reserving\\results_csv\\%s"
+locn = " conditional-aj-reserving\\results_csv\\%s"
 finame=paste0("simulation_",
               'no_features_all_records_',
               width,
@@ -279,7 +279,7 @@ colnames(results) <- c('actual.tot','pred.tot','cl.tot','variance','cl.msep','mc
 results$true.ultimate=ev*sum(V*(width-1))
 
 
-locn = "C:\\Users\\gpitt\\Documents\\GitHub\\conditional-aj-reserving\\results_csv\\%s"
+locn = " conditional-aj-reserving\\results_csv\\%s"
 finame=paste0("simulation_",
               'no_features_all_records_',
               width,
@@ -416,7 +416,7 @@ colnames(results) <- c('actual.tot',
 
 results$true.ultimate=ev*sum(1200*(width-1))
 
-locn = "C:\\Users\\gpitt\\Documents\\GitHub\\conditional-aj-reserving\\results_csv\\%s"
+locn = " conditional-aj-reserving\\results_csv\\%s"
 finame=paste0("simulation_",
               'no_features_all_records_',
               width,
@@ -551,7 +551,7 @@ colnames(results) <- c('actual.tot',
 
 results$true.ultimate=ev*sum(1200*(width-1))
 
-locn = "C:\\Users\\gpitt\\Documents\\GitHub\\conditional-aj-reserving\\results_csv\\%s"
+locn = " conditional-aj-reserving\\results_csv\\%s"
 finame=paste0("simulation_",
               'no_features_all_records_',
               width,

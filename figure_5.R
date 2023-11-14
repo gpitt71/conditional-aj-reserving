@@ -174,7 +174,7 @@ dt %>%
                      breaks = trans_breaks("log2", function(x) 2^x),
                      labels = trans_format("log2", math_format(2^.x)))
 fname=sprintf("severity_curve_maxp_%s.eps",maximum.p)
-ggsave(sprintf("C:\\Users\\gpitt\\Pictures\\markov-chains-reserving\\%s",fname),
+ggsave(sprintf("%s",fname),
        width = 6.5,
        height= 5,
        device=cairo_ps)

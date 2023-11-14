@@ -140,7 +140,7 @@ dt %>%
   xlab("Z")+
   ylab("cdf")
 
-ggsave("C:\\Users\\gpitt\\Pictures\\markov-chains-reserving\\severity_curve4.eps",
+ggsave(" severity_curve4.eps",
        width = 5.5,
        height= 5,
        device=cairo_ps)
@@ -403,7 +403,7 @@ dt %>%
   xlab("Z")+
   ylab("cdf")
 
-ggsave("C:\\Users\\gpitt\\Pictures\\markov-chains-reserving\\severity_curve5.eps",
+ggsave(" severity_curve5.eps",
        width = 5.5,
        height= 5,
        device=cairo_ps)
@@ -674,7 +674,7 @@ dt %>%
   xlab("Z")+
   ylab("cdf")
 
-ggsave("C:\\Users\\gpitt\\Pictures\\markov-chains-reserving\\severity_curve6.eps",
+ggsave(" severity_curve6.eps",
        width = 5.5,
        height= 5,
        device=cairo_ps)
@@ -904,7 +904,7 @@ dt %>%
   xlab("Z")+
   ylab("cdf")
 
-ggsave("C:\\Users\\gpitt\\Pictures\\markov-chains-reserving\\severity_curve7.eps",
+ggsave(" severity_curve7.eps",
        width = 5.5,
        height= 5,
        device=cairo_ps)

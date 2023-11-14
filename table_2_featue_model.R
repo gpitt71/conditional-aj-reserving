@@ -111,7 +111,7 @@ colnames(results) <- c('actual.tot',
                        'cl.msep',
                        'mcrps')
 
-locn = "C:\\Users\\gpitt\\Documents\\GitHub\\conditional-aj-reserving\\results_csv\\%s"
+locn = "conditional-aj-reserving\\results_csv\\%s"
 finame=paste0("simulation_",
                 'aytrend',
                 width,
