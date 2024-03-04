@@ -30,6 +30,12 @@ For each section, we describe below the relevant replication material.
 
 - Table 2 can be reproduced with the scripts `table_2_intercept_model.R` (results for the intercept model) and `table_2_feature_model.R` (results for the model with feature).
 
+## Section 4.4 Comparison with `hirem`
+
+- Table 3 can be reproduced with the script `table_2_feature_model.R`.
+
+- Table 5 can be reproduced with the script `table_5_comparison_with_hirem.R`.
+
 # Section 5. A data application on an insurance portfolio
 
 - We obtained Figure 4 with the script  `figure_4.R`. 
@@ -39,11 +45,11 @@ For each section, we describe below the relevant replication material.
 
 ## Section 5.1. Model comparison on different datasets
 
-- We obtained Table 4 and Table 5 using the script `table_4_intercept_model.R`(results for the intercept model) and `table_4_feature_model.R` (results for the model with feature).
+- We obtained Table 6 and Table 7 using the script `table_6_intercept_model.R`(results for the intercept model) and `table_6_feature_model.R` (results for the model with feature).
 
 ## Section 5.2. Model comparison on a single dataset
 
-- We obtained Table 6 using the scripts `table_6_intercept_model.R` (results for the intercept model) and `table_6_feature_model.R` (results for the model with feature).
+- We obtained Table 8 using the scripts `table_8_intercept_model.R` (results for the intercept model) and `table_8_feature_model.R` (results for the model with feature).
 
 # Content of the results_csv folder
 
@@ -66,10 +72,17 @@ For each section, we describe below the relevant replication material.
   
   - Model with feature
   
-    - `simulation_aytrend4_2023_10_23_12_52.csv`
-    - `simulation_aytrend5_2023_10_24_17_35.csv`
-    - `simulation_aytrend6_2023_10_23_12_54.csv`
-    - `simulation_aytrend7_2023_10_23_12_56.csv`
+    - `simulation_aytrend4_2024_02_29_13_31.csv`
+    - `simulation_aytrend5_2024_02_29_13_32.csv`
+    - `simulation_aytrend6_2024_02_29_13_34.csv`
+    - `simulation_aytrend7_2024_02_29_13_36.csv`
+    
+- Comparison with `hirem` (Section 4.4.):
+
+    - `simulation_hirem_10.csv`
+    - `simulation_hirem_extreme_10.csv`
+    - `simulation_hirem_settlement_10.csv`
+    - `simulation_hirem_claimmix_10.csv`
 
 - Results on the real data (Section 5.1.): 
   
@@ -88,14 +101,14 @@ Using the command `sessionInfo()`, we report version information about R, the OS
 ```
 R version 4.3.0 (2023-04-21 ucrt)
 Platform: x86_64-w64-mingw32/x64 (64-bit)
-Running under: Windows 10 x64 (build 19045)
+Running under: Windows 11 x64 (build 22631)
 
 Matrix products: default
 
 
 locale:
-[1] LC_COLLATE=Italian_Italy.utf8  LC_CTYPE=Italian_Italy.utf8    LC_MONETARY=Italian_Italy.utf8
-[4] LC_NUMERIC=C                   LC_TIME=Italian_Italy.utf8    
+[1] LC_COLLATE=English_United States.utf8  LC_CTYPE=English_United States.utf8    LC_MONETARY=English_United States.utf8
+[4] LC_NUMERIC=C                           LC_TIME=English_United States.utf8    
 
 time zone: Europe/Rome
 tzcode source: internal
@@ -104,24 +117,20 @@ attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
-[1] scales_1.2.1       tidyr_1.3.0        xtable_1.8-4       ggplot2_3.4.3      ChainLadder_0.2.18
-[6] dplyr_1.1.2        data.table_1.14.8  AalenJohansen_1.0 
+[1] hirem_0.1.0        ChainLadder_0.2.18 tidyr_1.3.1        dplyr_1.1.2        ggplot2_3.5.0      xtable_1.8-4      
+[7] data.table_1.14.8 
 
 loaded via a namespace (and not attached):
- [1] dotCall64_1.0-2    cplm_0.7-11        gtable_0.3.4       spam_2.9-1         biglm_0.9-2.1     
- [6] lattice_0.21-8     quadprog_1.5-8     vctrs_0.6.2        tools_4.3.0        generics_0.1.3    
-[11] curl_5.0.0         stats4_4.3.0       parallel_4.3.0     sandwich_3.0-2     tibble_3.2.1      
-[16] fansi_1.0.4        xts_0.13.1         pkgconfig_2.0.3    Matrix_1.6-1.1     RColorBrewer_1.1-3
-[21] actuar_3.3-2       rootSolve_1.8.2.3  lifecycle_1.0.3    compiler_4.3.0     stringr_1.5.0     
-[26] fields_15.2        statmod_1.5.0      munsell_0.5.0      systemfit_1.1-30   carData_3.0-5     
-[31] maps_3.4.1         pillar_1.9.0       car_3.1-2          MASS_7.3-58.4      viridis_0.6.3     
-[36] StMoMo_0.4.1       abind_1.4-5        nlme_3.1-162       fracdiff_1.5-2     tidyselect_1.2.0  
-[41] fanplot_4.0.0      gnm_1.1-5          stringi_1.7.12     reshape2_1.4.4     purrr_1.0.1       
-[46] qvcalc_1.0.3       tseries_0.10-54    splines_4.3.0      grid_4.3.0         colorspace_2.1-0  
-[51] cli_3.6.1          magrittr_2.0.3     relimp_1.0-5       utf8_1.2.3         withr_2.5.0       
-[56] forecast_8.21.1    tweedie_2.3.5      TTR_0.24.3         quantmod_0.4.25    nnet_7.3-18       
-[61] gridExtra_2.3      timeDate_4022.108  zoo_1.8-12         expint_0.1-8       urca_1.3-3        
-[66] coda_0.19-4        lmtest_0.9-40      viridisLite_0.4.2  rlang_1.1.0        Rcpp_1.0.10       
-[71] glue_1.6.2         DBI_1.1.3          rstudioapi_0.14    minqa_1.2.5        R6_2.5.1          
-[76] plyr_1.8.8
+ [1] cplm_0.7-11       gtable_0.3.4      biglm_0.9-2.1     gbm_2.1-06        xfun_0.39         lattice_0.21-8   
+ [7] vctrs_0.6.2       tools_4.3.0       generics_0.1.3    stats4_4.3.0      parallel_4.3.0    sandwich_3.0-2   
+[13] tibble_3.2.1      fansi_1.0.4       pkgconfig_2.0.3   Matrix_1.6-1.1    actuar_3.3-2      lifecycle_1.0.4  
+[19] compiler_4.3.0    stringr_1.5.1     statmod_1.5.0     munsell_0.5.0     systemfit_1.1-30  carData_3.0-5    
+[25] htmltools_0.5.5   yaml_2.3.7        pillar_1.9.0      car_3.1-2         MASS_7.3-58.4     abind_1.4-5      
+[31] nlme_3.1-162      tidyselect_1.2.0  digest_0.6.31     stringi_1.7.12    reshape2_1.4.4    purrr_1.0.1      
+[37] splines_4.3.0     fastmap_1.1.1     grid_4.3.0        colorspace_2.1-0  cli_3.6.1         magrittr_2.0.3   
+[43] survival_3.5-5    utf8_1.2.3        withr_3.0.0       scales_1.3.0      bit64_4.0.5       tweedie_2.3.5    
+[49] lubridate_1.9.2   timechange_0.2.0  rmarkdown_2.21    bit_4.0.5         AalenJohansen_1.0 zoo_1.8-12       
+[55] expint_0.1-8      coda_0.19-4       evaluate_0.21     knitr_1.42        lmtest_0.9-40     rlang_1.1.3      
+[61] Rcpp_1.0.10       glue_1.6.2        DBI_1.1.3         rstudioapi_0.15.0 minqa_1.2.5       R6_2.5.1         
+[67] plyr_1.8.8    
 ```

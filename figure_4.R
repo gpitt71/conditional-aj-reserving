@@ -53,15 +53,15 @@ tmp3 = tmp2%>%
   summarise(counts=n()/dim(tmp2)[1]) 
 
 
-ggplot(data=tmp3, aes(x=development_period
+g<- ggplot(data=tmp3, aes(x=development_period
                       , y=counts)) +
   geom_bar(stat="identity", fill="#4169E1", color="#454555")+
   theme_bw(base_size=rel(5))+
   xlim(0.5,8)+
   ylab("")+
-  xlab("Settlment DP")
-
-dev.off()  
+  xlab("Settlement DP")
+# ggsave(g, file="newsm.eps", device="eps",width = 6,height = 5.5)
+# dev.off()  
 
 
 ##

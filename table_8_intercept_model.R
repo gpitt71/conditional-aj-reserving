@@ -11,9 +11,11 @@ source('conditional-aj-reserving\\helper_functions_ajr.R')
 
 results = matrix(ncol=9)
 
-for(maximum.p in c(4,5,6,7)){
+maximum.p <- 6
+
+for(max.k in 4:(maximum.p)){
   
-  df = read.and.pp.data(fname='C:\\Users\\gpitt\\Documents\\Phd\\visiting\\dati\\data_ku\\final_claim_data.csv')
+  df = read.and.pp.data(fname='final_claim_data.csv')
   
   df = df %>% mutate(incPaid=incPaid)
 
@@ -48,11 +50,13 @@ reporting_period_tr <- clean.lt(as.triangle(reporting_period_vertical,
                                             dev="reporting_period",
                                             value="reporting_counts"))
 
+
 actual_triangle <- incr2cum(as.triangle(df,
-                                        origin='accident_period',
-                                        dev='development_period',
-                                        value='incPaid'))
+                               origin='accident_period',
+                               dev='development_period',
+                               value='incPaid'))
 diag_ftr <- sum(ChainLadder::getLatestCumulative(clean.lt(actual_triangle)))
+
 
 closed.claims[,
               events:=encode.cc(development_period,maximum.p),
@@ -85,7 +89,26 @@ data2fit <- lapply(data2fit_list, function(x){as.list(rbind(data.frame(times=0.,
 
 data2fit <- unname(data2fit)
 
-fit1 <- AalenJohansen::aalen_johansen(data2fit)
+ibnr.claims<-ibnr.claims %>%
+  group_by(Claim_number) %>%
+  reframe(true.ultimate=floor(sum(incPaid))) %>% 
+  as.data.table()
+
+
+  
+cat(paste0('State space with k '),as.character(max.k),'\n')
+  
+  if(max.k!=maximum.p){
+    data.list.ref <- lapply(data2fit,reformulate_state_space,newk = max.k)
+    
+  }else{
+    
+    data.list.ref <-data2fit
+    
+    }
+
+
+fit1 <- AalenJohansen::aalen_johansen(data.list.ref)
 
 yhat <-  sapply(fit1$p, last)
 
@@ -124,6 +147,9 @@ out <- rbns.data[,c('ultimate','variance','crps_i'):=individual_results_nf(k,
                  by=.(Claim_number)]
 
 
+# out <- rbns.data[,.(ultimate=k+individual_cost_nf(k,x.vals,yhat),
+#                     variance=individual_vty_nf(k,x.vals,yhat)),by=.(Claim_number)]
+
 fj <- NULL
 
 reporting_period_tr[is.na(reporting_period_tr)] <- 0
@@ -160,14 +186,13 @@ ibnr.var <- ibnr_num*(ev2.est-ev.est^2) + ev.est^2*(mack.rdel$process.error.i^2)
 
 # crps for IBNR
 
-ibnr.claims<-ibnr.claims %>%
-  group_by(Claim_number) %>%
-  reframe(true.ultimate=floor(sum(incPaid))) %>% 
-  as.data.table()
 
 ibnr.claims<-ibnr.claims[,c('crps_i'):=ibnr.crps.computer(true.ultimate=true.ultimate,
                                                           x.vals=x.vals,
                                                           yhat=yhat),by=.(Claim_number)]
+
+# estimated uc
+
 
 rbns.uc <- sum(out$ultimate)
 closed.uc<-sum(closed.claims$incPaid)
@@ -178,11 +203,13 @@ actual.uc=df %>%
   summarise(uc=sum(incPaid)) %>% unlist()
 
 
+
+
 cl.data <- find.t.data(df)
 cl.tot <- cl.calculator(incr2cum(cl.data))
 
 results = rbind(results,
-                c(maximum.p,
+                c(max.k,
                   actual.uc,
                   (closed.uc+ibnr.uc+rbns.uc)/actual.uc-1,
                   sum(cl.tot$ultimate)/actual.uc-1,
@@ -191,11 +218,12 @@ results = rbind(results,
                   mean(c(out$crps_i, ibnr.claims$crps_i),na.rm=T),
                   (closed.uc+ibnr.uc+rbns.uc)-diag_ftr,
                   sum(cl.tot$ultimate)-diag_ftr
-                  
                   )
                 )
 
 }
+
+
 
 results <- results[-1,]
 colnames(results) <- c("k",
@@ -213,6 +241,8 @@ results %>% xtable::xtable(digits=3) %>%print( include.rownames=FALSE)
 
 
 fname <- paste0("conditional-aj-reserving\\results_csv\\real_data_no_features_",
+                'maxp_',
+                maximum.p,
                 "_",
                 format(Sys.time(), 
                        "%Y_%m_%d_%H_%M"),

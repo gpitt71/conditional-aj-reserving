@@ -5,6 +5,7 @@ library(data.table)
 library(dplyr)
 library(ChainLadder)
 library(ggplot2)
+library(hirem)
 
 source('conditional-aj-reserving\\helper_functions_ajr.R')
 
@@ -14,7 +15,7 @@ input.pbties <- c(-7.11758383885783e-06, 1.39183828093592e-06, 5.73888289022062e
                   0, 0, -4.55533160623821e-06, 4.55533160623821e-06,
                   0, 0 ,0, 0)
 
-results <- matrix(ncol=6)
+results <- matrix(ncol=9)
 trial <- 1
 ix2 = 0
 V=1200
@@ -49,7 +50,8 @@ ap.volumes <- rep(V,width-1) -seq(0,100*(width-2),by=100)
   
   X <- sort(1/sample(11:(width-1+10),sum(ap.volumes),replace=T))
   
-  }
+}
+
 for(trial in 1:20){
   set.seed(trial)
   
@@ -94,12 +96,111 @@ for(trial in 1:20){
   pred.tot <- sum(out$ultimate) +sum(closed$ultimate)
   cl.tot <- chain_ladder_computer(input.data$actual.data,width=width)
   
+  ### hirem ----
+  
+  dt.w.features <- data.table(id=1:length(X),
+                              X=X)
+  
+  
+  cl.data <- sim.2.fit$actual.data %>%
+    group_by(id,accident_period,states) %>%
+    filter(states!=1) %>%
+    reframe(incrementals=diff(c(0,times))) %>%
+    group_by(id) %>% 
+    mutate(development_period=recode.cl(states))
+  
+  cl.triangle <- incr2cum(as.triangle(cl.data,
+                                      origin='accident_period',
+                                      dev='development_period',
+                                      value='incrementals'))[,1:(width-1)]
+  
+  diag_ftr <- sum(ChainLadder::getLatestCumulative(clean.lt(cl.triangle)))
+  
+  dt.hirem <- merge(cl.data, dt.w.features, on='id') 
+  
+  dt.hirem['calendar_period'] <- dt.hirem['accident_period'] + dt.hirem['development_period']
+  
+  dt.hirem<- dt.hirem %>%
+    group_by(id) %>%
+    mutate(close=c(rep(0,length(development_period)-1),1))
+  
+  upper_triangle <- dt.hirem %>% filter(calendar_period  <=(width-1))
+  lower_triangle <- dt.hirem %>% filter(calendar_period > (width-1))
+  
+  model <- hirem(upper_triangle)
+  
+  model <- hirem(upper_triangle) %>%
+    layer_glm('close', binomial(link = cloglog)) %>%
+    # layer_glm('payment', binomial(link = logit)) %>%
+    layer_glm('incrementals', Gamma(link = log))
+  
+  model <- fit(model,
+               close = 'close ~ factor(development_period) + X',
+               incrementals = 'incrementals ~ close + factor(development_period) + X')
+  
+  
+  update <- function(data) {
+    data %>%
+      dplyr::mutate(development_period = development_period + 1,
+                    calendar_period = calendar_period + 1)
+  }
+  
+  model <- register_updater(model, update)
+  
+  simul <- simulate(model,
+                    nsim = 5,
+                    filter = function(data){dplyr::filter(data,
+                                                          development_period <= (width-1),
+                                                          close == 0)},
+                    data = dt.hirem %>% dplyr::filter(calendar_period == (width-1)))
+  
+  
+  rbns_estimate <- simul %>%
+    dplyr::group_by(simulation) %>%
+    dplyr::summarise(rbns = sum(incrementals))
+  
+  
+  hirem.tot <- mean(rbns_estimate$rbns)+diag_ftr
+  
+  setDT(simul)
+  
+  rbns_estimate_av <- simul[,.(rbns=sum(incrementals),
+                               X=first(X)),
+                            by=.(id,simulation)][,.(rbns=mean(rbns),
+                                                    var.hirem=var(rbns),
+                                                    X=first(X)),by=.(id)]
+  var.hirem <- sum(rbns_estimate_av$var.hirem)
+  
+  #
+  
+  # find rbns
+  commonID<-intersect(rbns.data$id, dt.hirem$id)
+  
+  actual.hirem <- dt.hirem[dt.hirem$id %in% commonID,]
+  setDT(actual.hirem)
+  actual.hirem<-actual.hirem[,.(true.ultimate=sum(incrementals)), by=.(id)]
+  
+  rbns.data.hirem <-merge(actual.hirem,rbns_estimate_av,by='id')
+  
+  models.list.hirem <- find.models.list.hirem(hirem.df = rbns_estimate_av,feature.name='X')
+  
+  rbns.data.hirem<-rbns.data.hirem[,c('crps'):=individual_results_hirem(true.ultimate=true.ultimate,
+                                                                        X=X,
+                                                                        models.list=models.list.hirem),by=.(id)]
+  
+  rbns.reserve.hirem <- mean(rbns_estimate$rbns)
+  
+  crps.hirem <- mean(rbns.data.hirem$crps)
+  
   results = rbind(results, c(actual.tot,
                              pred.tot,
                              cl.tot$ultimate,
+                             hirem.tot,
                              sqrt(sum(out$variance)),
+                             sqrt(var.hirem),
                              cl.tot$process.se,
-                             mean(out$crps_i)))
+                             mean(out$crps_i),
+                             crps.hirem))
   
 }
 
@@ -107,9 +208,12 @@ results <- data.frame(results[-1,])
 colnames(results) <- c('actual.tot',
                        'pred.tot',
                        'cl.tot',
+                       'hirem.tot',
                        'aj.msep',
+                       'hirem.msep',
                        'cl.msep',
-                       'mcrps')
+                       'mcrps',
+                       'crps.hirem')
 
 locn = "conditional-aj-reserving\\results_csv\\%s"
 finame=paste0("simulation_",
@@ -169,7 +273,7 @@ lambda <- function(t){
 }
 
 V=1200
-results <- matrix(ncol=6)
+results <- matrix(ncol=9)
 ap.volumes <- rep(V,width-1) -seq(0,100*(width-2),by=100)
 
 
@@ -221,12 +325,109 @@ for(trial in 1:20){
   pred.tot <- sum(out$ultimate) +sum(closed$ultimate)
   cl.tot <- chain_ladder_computer(input.data$actual.data,width=width)
   
+  ### hirem ----
+  
+  dt.w.features <- data.table(id=1:length(X),
+                              X=X)
+  
+  
+  cl.data <- sim.2.fit$actual.data %>%
+    group_by(id,accident_period,states) %>%
+    filter(states!=1) %>%
+    reframe(incrementals=diff(c(0,times))) %>%
+    group_by(id) %>% 
+    mutate(development_period=recode.cl(states))
+  
+  cl.triangle <- incr2cum(as.triangle(cl.data,
+                                      origin='accident_period',
+                                      dev='development_period',
+                                      value='incrementals'))[,1:(width-1)]
+  
+  diag_ftr <- sum(ChainLadder::getLatestCumulative(clean.lt(cl.triangle)))
+  
+  dt.hirem <- merge(cl.data, dt.w.features, on='id') 
+  
+  dt.hirem['calendar_period'] <- dt.hirem['accident_period'] + dt.hirem['development_period']
+  
+  dt.hirem<- dt.hirem %>%
+    group_by(id) %>%
+    mutate(close=c(rep(0,length(development_period)-1),1))
+  
+  upper_triangle <- dt.hirem %>% filter(calendar_period  <=(width-1))
+  lower_triangle <- dt.hirem %>% filter(calendar_period > (width-1))
+  
+  model <- hirem(upper_triangle)
+  
+  model <- hirem(upper_triangle) %>%
+    layer_glm('close', binomial(link = cloglog)) %>%
+    # layer_glm('payment', binomial(link = logit)) %>%
+    layer_glm('incrementals', Gamma(link = log))
+  
+  model <- fit(model,
+               close = 'close ~ factor(development_period) + X',
+               incrementals = 'incrementals ~ close + factor(development_period) + X')
+  
+  
+  update <- function(data) {
+    data %>%
+      dplyr::mutate(development_period = development_period + 1,
+                    calendar_period = calendar_period + 1)
+  }
+  
+  model <- register_updater(model, update)
+  
+  simul <- simulate(model,
+                    nsim = 5,
+                    filter = function(data){dplyr::filter(data,
+                                                          development_period <= (width-1),
+                                                          close == 0)},
+                    data = dt.hirem %>% dplyr::filter(calendar_period == (width-1)))
+  
+  
+  rbns_estimate <- simul %>%
+    dplyr::group_by(simulation) %>%
+    dplyr::summarise(rbns = sum(incrementals))
+  
+  
+  hirem.tot <- mean(rbns_estimate$rbns)+diag_ftr
+  
+  setDT(simul)
+  
+  rbns_estimate_av <- simul[,.(rbns=sum(incrementals),
+                               X=first(X)),
+                            by=.(id,simulation)][,.(rbns=mean(rbns),
+                                                    var.hirem=var(rbns),
+                                                    X=first(X)),by=.(id)]
+  var.hirem <- sum(rbns_estimate_av$var.hirem)
+  
+  # find rbns
+  commonID<-intersect(rbns.data$id, dt.hirem$id)
+  
+  actual.hirem <- dt.hirem[dt.hirem$id %in% commonID,]
+  setDT(actual.hirem)
+  actual.hirem<-actual.hirem[,.(true.ultimate=sum(incrementals)), by=.(id)]
+  
+  rbns.data.hirem <-merge(actual.hirem,rbns_estimate_av,by='id')
+  
+  models.list.hirem <- find.models.list.hirem(hirem.df = rbns_estimate_av,feature.name='X')
+  
+  rbns.data.hirem<-rbns.data.hirem[,c('crps'):=individual_results_hirem(true.ultimate=true.ultimate,
+                                                                        X=X,
+                                                                        models.list=models.list.hirem),by=.(id)]
+  
+  rbns.reserve.hirem <- mean(rbns_estimate$rbns)
+  
+  crps.hirem <- mean(rbns.data.hirem$crps)
+  
   results = rbind(results, c(actual.tot,
                              pred.tot,
                              cl.tot$ultimate,
+                             hirem.tot,
                              sqrt(sum(out$variance)),
+                             sqrt(var.hirem),
                              cl.tot$process.se,
-                             mean(out$crps_i)))
+                             mean(out$crps_i),
+                             crps.hirem))
   
 }
 
@@ -234,11 +435,15 @@ results <- data.frame(results[-1,])
 colnames(results) <- c('actual.tot',
                        'pred.tot',
                        'cl.tot',
+                       'hirem.tot',
                        'aj.msep',
+                       'hirem.msep',
                        'cl.msep',
-                       'mcrps')
+                       'mcrps',
+                       'crps.hirem')
 
 locn = "conditional-aj-reserving\\results_csv\\%s"
+
 finame=paste0("simulation_",
               'aytrend',
               width,
@@ -297,7 +502,7 @@ lambda <- function(t){
 }
 
 V=1200
-results <- matrix(ncol=6)
+results <- matrix(ncol=9)
 ap.volumes <- rep(V,width-1)-seq(0,100*(width-2),by=100)
 
 
@@ -347,12 +552,109 @@ for(trial in 1:20){
   pred.tot <- sum(out$ultimate) +sum(closed$ultimate)
   cl.tot <- chain_ladder_computer(input.data$actual.data,width=width)
   
+  ### hirem ----
+  
+  dt.w.features <- data.table(id=1:length(X),
+                              X=X)
+  
+  
+  cl.data <- sim.2.fit$actual.data %>%
+    group_by(id,accident_period,states) %>%
+    filter(states!=1) %>%
+    reframe(incrementals=diff(c(0,times))) %>%
+    group_by(id) %>% 
+    mutate(development_period=recode.cl(states))
+  
+  cl.triangle <- incr2cum(as.triangle(cl.data,
+                                      origin='accident_period',
+                                      dev='development_period',
+                                      value='incrementals'))[,1:(width-1)]
+  
+  diag_ftr <- sum(ChainLadder::getLatestCumulative(clean.lt(cl.triangle)))
+  
+  dt.hirem <- merge(cl.data, dt.w.features, on='id') 
+  
+  dt.hirem['calendar_period'] <- dt.hirem['accident_period'] + dt.hirem['development_period']
+  
+  dt.hirem<- dt.hirem %>%
+    group_by(id) %>%
+    mutate(close=c(rep(0,length(development_period)-1),1))
+  
+  upper_triangle <- dt.hirem %>% filter(calendar_period  <=(width-1))
+  lower_triangle <- dt.hirem %>% filter(calendar_period > (width-1))
+  
+  model <- hirem(upper_triangle)
+  
+  model <- hirem(upper_triangle) %>%
+    layer_glm('close', binomial(link = cloglog)) %>%
+    # layer_glm('payment', binomial(link = logit)) %>%
+    layer_glm('incrementals', Gamma(link = log))
+  
+  model <- fit(model,
+               close = 'close ~ factor(development_period) + X',
+               incrementals = 'incrementals ~ close + factor(development_period) + X')
+  
+  
+  update <- function(data) {
+    data %>%
+      dplyr::mutate(development_period = development_period + 1,
+                    calendar_period = calendar_period + 1)
+  }
+  
+  model <- register_updater(model, update)
+  
+  simul <- simulate(model,
+                    nsim = 5,
+                    filter = function(data){dplyr::filter(data,
+                                                          development_period <= (width-1),
+                                                          close == 0)},
+                    data = dt.hirem %>% dplyr::filter(calendar_period == (width-1)))
+  
+  
+  rbns_estimate <- simul %>%
+    dplyr::group_by(simulation) %>%
+    dplyr::summarise(rbns = sum(incrementals))
+  
+  
+  hirem.tot <- mean(rbns_estimate$rbns)+diag_ftr
+  
+  setDT(simul)
+  
+  rbns_estimate_av <- simul[,.(rbns=sum(incrementals),
+                               X=first(X)),
+                            by=.(id,simulation)][,.(rbns=mean(rbns),
+                                                    var.hirem=var(rbns),
+                                                    X=first(X)),by=.(id)]
+  var.hirem <- sum(rbns_estimate_av$var.hirem)
+  
+  # find rbns
+  commonID<-intersect(rbns.data$id, dt.hirem$id)
+  
+  actual.hirem <- dt.hirem[dt.hirem$id %in% commonID,]
+  setDT(actual.hirem)
+  actual.hirem<-actual.hirem[,.(true.ultimate=sum(incrementals)), by=.(id)]
+  
+  rbns.data.hirem <-merge(actual.hirem,rbns_estimate_av,by='id')
+  
+  models.list.hirem <- find.models.list.hirem(hirem.df = rbns_estimate_av,feature.name='X')
+  
+  rbns.data.hirem<-rbns.data.hirem[,c('crps'):=individual_results_hirem(true.ultimate=true.ultimate,
+                                                                        X=X,
+                                                                        models.list=models.list.hirem),by=.(id)]
+  
+  rbns.reserve.hirem <- mean(rbns_estimate$rbns)
+  
+  crps.hirem <- mean(rbns.data.hirem$crps)
+  
   results = rbind(results, c(actual.tot,
                              pred.tot,
                              cl.tot$ultimate,
+                             hirem.tot,
                              sqrt(sum(out$variance)),
+                             sqrt(var.hirem),
                              cl.tot$process.se,
-                             mean(out$crps_i)))
+                             mean(out$crps_i),
+                             crps.hirem))
   
 }
 
@@ -360,9 +662,12 @@ results <- data.frame(results[-1,])
 colnames(results) <- c('actual.tot',
                        'pred.tot',
                        'cl.tot',
+                       'hirem.tot',
                        'aj.msep',
+                       'hirem.msep',
                        'cl.msep',
-                       'mcrps')
+                       'mcrps',
+                       'crps.hirem')
 
 locn = "conditional-aj-reserving\\results_csv\\%s"
 finame=paste0("simulation_",
@@ -421,7 +726,7 @@ lambda <- function(t){
 
 
 V=1200
-results <- matrix(ncol=6)
+results <- matrix(ncol=9)
 ap.volumes <- rep(V,width-1)-seq(0,100*(width-2),by=100)
 
 {set.seed(1)
@@ -471,12 +776,109 @@ for(trial in 1:20){
   pred.tot <- sum(out$ultimate) +sum(closed$ultimate)
   cl.tot <- chain_ladder_computer(input.data$actual.data,width=width)
   
+  ### hirem ----
+  
+  dt.w.features <- data.table(id=1:length(X),
+                              X=X)
+  
+  
+  cl.data <- sim.2.fit$actual.data %>%
+    group_by(id,accident_period,states) %>%
+    filter(states!=1) %>%
+    reframe(incrementals=diff(c(0,times))) %>%
+    group_by(id) %>% 
+    mutate(development_period=recode.cl(states))
+  
+  cl.triangle <- incr2cum(as.triangle(cl.data,
+                                      origin='accident_period',
+                                      dev='development_period',
+                                      value='incrementals'))[,1:(width-1)]
+  
+  diag_ftr <- sum(ChainLadder::getLatestCumulative(clean.lt(cl.triangle)))
+  
+  dt.hirem <- merge(cl.data, dt.w.features, on='id') 
+  
+  dt.hirem['calendar_period'] <- dt.hirem['accident_period'] + dt.hirem['development_period']
+  
+  dt.hirem<- dt.hirem %>%
+    group_by(id) %>%
+    mutate(close=c(rep(0,length(development_period)-1),1))
+  
+  upper_triangle <- dt.hirem %>% filter(calendar_period  <=(width-1))
+  lower_triangle <- dt.hirem %>% filter(calendar_period > (width-1))
+  
+  model <- hirem(upper_triangle)
+  
+  model <- hirem(upper_triangle) %>%
+    layer_glm('close', binomial(link = cloglog)) %>%
+    # layer_glm('payment', binomial(link = logit)) %>%
+    layer_glm('incrementals', Gamma(link = log))
+  
+  model <- fit(model,
+               close = 'close ~ factor(development_period) + X',
+               incrementals = 'incrementals ~ close + factor(development_period) + X')
+  
+  
+  update <- function(data) {
+    data %>%
+      dplyr::mutate(development_period = development_period + 1,
+                    calendar_period = calendar_period + 1)
+  }
+  
+  model <- register_updater(model, update)
+  
+  simul <- simulate(model,
+                    nsim = 5,
+                    filter = function(data){dplyr::filter(data,
+                                                          development_period <= (width-1),
+                                                          close == 0)},
+                    data = dt.hirem %>% dplyr::filter(calendar_period == (width-1)))
+  
+  
+  rbns_estimate <- simul %>%
+    dplyr::group_by(simulation) %>%
+    dplyr::summarise(rbns = sum(incrementals))
+  
+  
+  hirem.tot <- mean(rbns_estimate$rbns)+diag_ftr
+  
+  setDT(simul)
+  
+  rbns_estimate_av <- simul[,.(rbns=sum(incrementals),
+                               X=first(X)),
+                            by=.(id,simulation)][,.(rbns=mean(rbns),
+                                                          var.hirem=var(rbns),
+                                                          X=first(X)),by=.(id)]
+  var.hirem <- sum(rbns_estimate_av$var.hirem)
+  
+  # find rbns
+  commonID<-intersect(rbns.data$id, dt.hirem$id)
+  
+  actual.hirem <- dt.hirem[dt.hirem$id %in% commonID,]
+  setDT(actual.hirem)
+  actual.hirem<-actual.hirem[,.(true.ultimate=sum(incrementals)), by=.(id)]
+  
+  rbns.data.hirem <-merge(actual.hirem,rbns_estimate_av,by='id')
+  
+  models.list.hirem <- find.models.list.hirem(hirem.df = rbns_estimate_av,feature.name='X')
+  
+  rbns.data.hirem<-rbns.data.hirem[,c('crps'):=individual_results_hirem(true.ultimate=true.ultimate,
+                                                                        X=X,
+                                                                        models.list=models.list.hirem),by=.(id)]
+  
+  rbns.reserve.hirem <- mean(rbns_estimate$rbns)
+  
+  crps.hirem <- mean(rbns.data.hirem$crps)
+  
   results = rbind(results, c(actual.tot,
                              pred.tot,
                              cl.tot$ultimate,
+                             hirem.tot,
                              sqrt(sum(out$variance)),
+                             sqrt(var.hirem),
                              cl.tot$process.se,
-                             mean(out$crps_i)))
+                             mean(out$crps_i),
+                             crps.hirem))
   
 }
 
@@ -484,9 +886,12 @@ results <- data.frame(results[-1,])
 colnames(results) <- c('actual.tot',
                        'pred.tot',
                        'cl.tot',
+                       'hirem.tot',
                        'aj.msep',
+                       'hirem.msep',
                        'cl.msep',
-                       'mcrps')
+                       'mcrps',
+                       'crps.hirem')
 
 locn = "conditional-aj-reserving\\results_csv\\%s"
 finame=paste0("simulation_",

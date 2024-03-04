@@ -222,6 +222,9 @@ simulate_mkvian_data <- function(rates = jump_rate,
   
 }
 
+
+
+
 simulate_mkvian_dataX <- function(rates = jump_rate, 
                                   dists = mark_dist,
                                   ap.volumes,
@@ -310,7 +313,6 @@ compute.ajr.models <- function(dt,
                                true.ultimate,
                                X='Claim_type_key',
                                data.list){
-  
   tmp.x <- unique(sort(as.numeric(as.character(dt[[X]]))))
   l <- list()
   
@@ -378,6 +380,46 @@ individual_results_X_w_pre_saved_models <- function(k,true.ultimate,X,models.lis
   return(list(ultimate = ev+k,
               variance=vty,
               crps_i=crps_i))
+  
+}
+
+
+find.models.list.hirem<-function(hirem.df,feature.name='type'){
+  
+  models.list.hirem <- list()
+  
+  tmp.types<- as.character(unique(hirem.df[[feature.name]]))
+  
+  for(ty.ix in tmp.types){
+
+    xi <- as.character(ty.ix)
+
+    tmp <- hirem.df[hirem.df[[feature.name]]==xi,]
+    x.vals <- tmp$rbns
+
+    Fn <- ecdf(x.vals)
+    yhat <- Fn(x.vals)
+    yhat <- yhat[order(x.vals)]
+    x.vals <-  sort(x.vals)
+    
+    models.list.hirem[[ty.ix]] <- list(x.vals=x.vals,yhat=yhat)
+
+    }
+  
+  return(models.list.hirem)
+  
+}
+
+individual_results_hirem <- function(true.ultimate,X,models.list){
+  
+  xi <- as.character(X)
+  
+  yhat <- models.list[[xi]]$yhat
+  x.vals <- models.list[[xi]]$x.vals
+  
+  crps_i=crps_computer(k=NULL,y=true.ultimate,x=x.vals,cdf_i=yhat)
+  
+  return(list(crps_i=crps_i))
   
 }
 
@@ -665,6 +707,7 @@ encode.cc <- function(x,maximum.p){
   return(x)}
 
 encode.rbns <- function(x,y,ay,maximum.p,tsh=1e-08){
+  
   x=x+1
   lx <- last(x)
   if(lx==(maximum.p-ay)){

@@ -9,10 +9,10 @@ source('conditional-aj-reserving\\helper_functions_ajr.R')
 
 # Construct the model ----
 results = matrix(ncol=9)  
-maximum.p <- 6
-for(max.k in 4:(maximum.p)){
 
-df = read.and.pp.data(fname='final_claim_data.csv')
+for(maximum.p in c(4,5,6,7)){
+
+df = read.and.pp.data(fname='final_claim_data.csv')  
 
 df = df %>% mutate(incPaid=incPaid)
   
@@ -36,24 +36,23 @@ rbns.claims = df%>%
   group_by(Claim_number) %>%
   filter(calendar_period<=(maximum.p-1)) %>%filter(!(1%in%delta))%>%as.data.table()
 
-
 reporting_period_vertical <- rbind(closed.claims,ibnr.claims,rbns.claims)
 reporting_period_vertical<-reporting_period_vertical[,reporting_period:=reporting_period-accident_period]
 reporting_period_vertical<-reporting_period_vertical[reporting_period<=(maximum.p-1)] #sometimes reporting calendar period is different than developed. Hence we did not filter it before
 reporting_period_vertical<-reporting_period_vertical[,.(reporting_counts=.N),by=.(accident_period,reporting_period)]
 
-
+reporting_period_tr <- clean.lt(as.triangle(reporting_period_vertical,
+                                            origin="accident_period",
+                                            dev="reporting_period",
+                                            value="reporting_counts"))
+  
 
 actual_triangle <- incr2cum(as.triangle(df,
                                         origin='accident_period',
                                         dev='development_period',
                                         value='incPaid'))
 diag_ftr <- sum(ChainLadder::getLatestCumulative(clean.lt(actual_triangle)))
-
-reporting_period_tr <- clean.lt(as.triangle(reporting_period_vertical,
-                                            origin="accident_period",
-                                            dev="reporting_period",
-                                            value="reporting_counts"))
+  
   
 closed.claims[,
                 events:=encode.cc(development_period,maximum.p),
@@ -105,28 +104,11 @@ data2fit <- lapply(data2fit_list, function(x){as.list(rbind(data.frame(times=0.,
 
 data2fit <- unname(data2fit)
 
-data2fit <- lapply(data2fit, function(x){x[[3]]<-unique(x[[3]])
+data.list.ref <- lapply(data2fit, function(x){x[[3]]<-unique(x[[3]])
                                               return(x)
                                                 })
     
 
-ibnr.claims<-ibnr.claims %>%
-  group_by(Claim_number) %>%
-  reframe(true.ultimate=floor(sum(incPaid))) %>% 
-  as.data.table()
-
-  
-  cat(paste0('State space with k '),as.character(max.k),'\n')
-  
-  if(max.k!=maximum.p){
-    
-  data.list.ref <- lapply(data2fit,reformulate_state_space_X,newk = max.k)
-  
-  }else{
-    
-    data.list.ref <-data2fit}
-  
-  
   
   rbns.data <- rbns.claims.fit[,times:=cumsum(times),by=Claim_number][,.(k=last(times)),by=.(Claim_number)]
   
@@ -136,7 +118,6 @@ ibnr.claims<-ibnr.claims %>%
   
   models.list <- compute.ajr.models(rbns.data,
                                     data.list=data.list.ref)
-  
   
   actual=df %>%
     ungroup() %>%
@@ -155,6 +136,7 @@ ibnr.claims<-ibnr.claims %>%
                    by=.(Claim_number)]
   
 
+  
   actual.uc=df %>%
     ungroup() %>%
     filter(accident_period<=(maximum.p-2)&development_period<=(maximum.p-1)) %>%
@@ -215,16 +197,22 @@ ibnr.claims<-ibnr.claims %>%
   ev.est <- cev(0,x=x.vals,y=yhat)
   ev2.est <- 2*cev2(0,x=x.vals,y=yhat)
   
+  
+  
   # estimated uc
   
   tmp.tr <- clean.lt(reporting_period_tr_cum)
   mack.rdel <- cl.calculator(tmp.tr) 
-  
+
   ibnr.uc <- ibnr_num*ev.est
   ibnr.var <- ibnr_num*(ev2.est-ev.est^2) + ev.est^2*(mack.rdel$process.error.i^2)
   
   # crps for IBNR
   
+  ibnr.claims<-ibnr.claims %>%
+    group_by(Claim_number) %>%
+    reframe(true.ultimate=floor(sum(incPaid))) %>% 
+    as.data.table()
   
   ibnr.claims<-ibnr.claims[,c('crps_i'):=ibnr.crps.computer(true.ultimate=true.ultimate,
                                                             x.vals=x.vals,
@@ -238,7 +226,7 @@ ibnr.claims<-ibnr.claims %>%
   closed.uc<-sum(closed.claims$incPaid)
   
   results = rbind(results,
-                  c(max.k,
+                  c(maximum.p,
                     actual.uc,
                     (closed.uc+ibnr.uc+rbns.uc)/actual.uc-1,
                     sum(cl.tot$ultimate)/actual.uc-1,
@@ -247,8 +235,8 @@ ibnr.claims<-ibnr.claims %>%
                     crps.aj,
                     (closed.uc+ibnr.uc+rbns.uc)-diag_ftr,
                     sum(cl.tot$ultimate)-diag_ftr
-                    
-                    ))
+                    )
+  )
   
   
 }
@@ -267,8 +255,6 @@ colnames(results) <- c("k",
 results %>% xtable::xtable(digits=3) %>%print(include.rownames=FALSE)
 
 fname <- paste0("conditional-aj-reserving\\results_csv\\real_data_w_features_",
-                'maxp_',
-                maximum.p,
                 "_",
                  format(Sys.time(), 
                  "%Y_%m_%d_%H_%M"),
